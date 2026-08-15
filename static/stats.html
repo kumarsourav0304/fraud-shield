@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fraud Shield — Live Performance</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: #0f172a; color: #e2e8f0; padding: 32px 24px; min-height: 100vh;
+    }
+    .nav a { color: #60a5fa; text-decoration: none; font-size: 13px; }
+    h1 { font-size: 24px; margin: 6px 0 4px; }
+    .subtitle { color: #94a3b8; font-size: 14px; margin-bottom: 26px; max-width: 720px; }
+    .big-cards { display: flex; gap: 16px; margin-bottom: 26px; flex-wrap: wrap; }
+    .big {
+      background: #1e293b; border-radius: 14px; padding: 24px; flex: 1; min-width: 200px;
+    }
+    .big .num { font-size: 46px; font-weight: 700; }
+    .big .lbl { font-size: 13px; color: #cbd5e1; margin-top: 6px; font-weight: 600; }
+    .big .exp { font-size: 12px; color: #94a3b8; margin-top: 6px; line-height: 1.4; }
+    .p-precision .num { color: #4ade80; }
+    .p-recall .num { color: #38bdf8; }
+    .p-fpr .num { color: #facc15; }
+    h2 { font-size: 16px; color: #cbd5e1; margin: 18px 0 12px; }
+    .grid { display: flex; gap: 14px; flex-wrap: wrap; }
+    .cell {
+      background: #16223a; border-radius: 12px; padding: 18px 20px; flex: 1; min-width: 150px;
+    }
+    .cell .n { font-size: 28px; font-weight: 700; }
+    .cell .l { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+    .c-caught .n { color: #4ade80; } .c-cleared .n { color: #60a5fa; }
+    .c-fa .n { color: #facc15; } .c-missed .n { color: #f87171; }
+    .note {
+      margin-top: 24px; background: #1e293b; border-radius: 12px; padding: 18px 20px;
+      font-size: 13px; color: #cbd5e1; line-height: 1.6; max-width: 900px;
+    }
+    .note b { color: #e2e8f0; }
+  </style>
+</head>
+<body>
+  <div class="nav"><a href="/">← Back to payment shield</a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="/review.html">Bank review console →</a></div>
+  <h1>📊 Live Detection Performance</h1>
+  <div class="subtitle">
+    These numbers are computed live: the engine is run over every transaction in the dataset
+    right now, and scored against the known fraud labels. Nothing here is hard-coded.
+  </div>
+
+  <div class="big-cards">
+    <div class="big p-precision">
+      <div class="num" id="precision">–</div>
+      <div class="lbl">Precision</div>
+      <div class="exp">Of the payments we flagged, how many were actually fraud. High precision = few false alarms.</div>
+    </div>
+    <div class="big p-recall">
+      <div class="num" id="recall">–</div>
+      <div class="lbl">Recall</div>
+      <div class="exp">Of all the real fraud in the data, how much the shield caught. High recall = few scams slip through.</div>
+    </div>
+    <div class="big p-fpr">
+      <div class="num" id="fpr">–</div>
+      <div class="lbl">False-positive rate</div>
+      <div class="exp">Share of legitimate payments the shield wrongly flagged. Kept low so honest users aren't blocked.</div>
+    </div>
+  </div>
+
+  <h2>Tested on <span id="total">–</span> transactions (<span id="fraudn">–</span> fraud, <span id="normaln">–</span> normal)</h2>
+  <div class="grid">
+    <div class="cell c-caught"><div class="n" id="caught">–</div><div class="l">Scams correctly caught</div></div>
+    <div class="cell c-cleared"><div class="n" id="cleared">–</div><div class="l">Legit payments correctly cleared</div></div>
+    <div class="cell c-fa"><div class="n" id="fa">–</div><div class="l">False alarms</div></div>
+    <div class="cell c-missed"><div class="n" id="missed">–</div><div class="l">Fraud missed (borderline cases)</div></div>
+  </div>
+
+  <div class="note">
+    <b>Why these numbers are honest.</b> The test data is synthetic and deliberately varied — fraud
+    trips only a random subset of signals, so some scams look almost normal. That is why a few are
+    missed and a few legitimate payments are flagged. A perfect score on synthetic data would be a
+    red flag; these realistic trade-offs are exactly what the <b>bank review console</b> exists to
+    catch and correct. Voice-phishing detection adds a second, independent layer on top of these
+    payment-behaviour results.
+  </div>
+
+  <script>
+    async function load() {
+      const res = await fetch("/stats");
+      const d = await res.json();
+      document.getElementById("precision").textContent = d.precision + "%";
+      document.getElementById("recall").textContent = d.recall + "%";
+      document.getElementById("fpr").textContent = d.false_positive_rate + "%";
+      document.getElementById("total").textContent = d.total;
+      document.getElementById("fraudn").textContent = d.fraud_total;
+      document.getElementById("normaln").textContent = d.normal_total;
+      document.getElementById("caught").textContent = d.caught;
+      document.getElementById("cleared").textContent = d.cleared;
+      document.getElementById("fa").textContent = d.false_alarms;
+      document.getElementById("missed").textContent = d.missed;
+    }
+    load();
+  </script>
+</body>
+</html>

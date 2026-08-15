@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fraud Shield — Bank Review Console</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: #0f172a; color: #e2e8f0; padding: 32px 24px; min-height: 100vh;
+    }
+    h1 { font-size: 24px; margin-bottom: 4px; }
+    .subtitle { color: #94a3b8; font-size: 14px; margin-bottom: 24px; }
+    .nav a { color: #60a5fa; text-decoration: none; font-size: 13px; }
+    .cards { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+    .stat {
+      background: #1e293b; border-radius: 12px; padding: 18px 22px; min-width: 150px; flex: 1;
+    }
+    .stat .num { font-size: 30px; font-weight: 700; }
+    .stat .lbl { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+    .n-total { color: #e2e8f0; } .n-block { color: #f87171; }
+    .n-warn { color: #facc15; } .n-over { color: #a855f7; }
+    .controls { margin-bottom: 14px; }
+    .controls button {
+      background: #1e293b; color: #cbd5e1; border: 1px solid #334155; border-radius: 8px;
+      padding: 8px 14px; font-size: 13px; cursor: pointer; margin-right: 8px;
+    }
+    .controls button.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+    table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 12px; overflow: hidden; }
+    th, td { text-align: left; padding: 12px 14px; font-size: 13px; border-bottom: 1px solid #334155; }
+    th { background: #16223a; color: #94a3b8; font-weight: 600; }
+    tr:last-child td { border-bottom: none; }
+    .pill { padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .BLOCK { background: #3a0a0a; color: #f87171; }
+    .WARN  { background: #3a2e05; color: #facc15; }
+    .APPROVE { background: #052e1b; color: #4ade80; }
+    .CONFIRMED { color: #4ade80; } .CANCELLED { color: #94a3b8; }
+    .flag { color: #a855f7; font-size: 12px; }
+    .empty { color: #64748b; padding: 20px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="nav"><a href="/">← Back to payment shield</a></div>
+  <h1>🏦 Bank Review Console</h1>
+  <div class="subtitle">Every shield decision and the user's response — for false-positive review and audit.</div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="controls">
+    <button id="btn-all" class="active" onclick="setFilter('all')">All decisions</button>
+    <button id="btn-flagged" onclick="setFilter('flagged')">Flagged only (WARN/BLOCK)</button>
+    <button id="btn-override" onclick="setFilter('override')">Overrides (paid despite warning)</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Logged at</th><th>User</th><th>Amount</th><th>Payee</th>
+        <th>Shield decision</th><th>Score</th><th>User action</th><th>Review flag</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+
+  <script>
+    let allRows = [];
+    let filter = "all";
+
+    async function load() {
+      const res = await fetch("/audit");
+      const data = await res.json();
+      allRows = data.rows;
+
+      const s = data.summary;
+      document.getElementById("cards").innerHTML = `
+        <div class="stat"><div class="num n-total">${s.total}</div><div class="lbl">Total decisions logged</div></div>
+        <div class="stat"><div class="num n-block">${s.blocked}</div><div class="lbl">Blocked by shield</div></div>
+        <div class="stat"><div class="num n-warn">${s.warned}</div><div class="lbl">Warned</div></div>
+        <div class="stat"><div class="num n-over">${s.overrides}</div><div class="lbl">Paid despite warning (needs review)</div></div>
+      `;
+      render();
+    }
+
+    function setFilter(f) {
+      filter = f;
+      document.querySelectorAll(".controls button").forEach(b => b.classList.remove("active"));
+      document.getElementById("btn-" + (f === "all" ? "all" : f === "flagged" ? "flagged" : "override")).classList.add("active");
+      render();
+    }
+
+    function render() {
+      let rows = allRows;
+      if (filter === "flagged") rows = rows.filter(r => r.shield_decision === "WARN" || r.shield_decision === "BLOCK");
+      if (filter === "override") rows = rows.filter(r => (r.shield_decision === "WARN" || r.shield_decision === "BLOCK") && r.user_action === "CONFIRMED");
+
+      const tbody = document.getElementById("tbody");
+      if (rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="empty">No matching decisions.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = rows.map(r => {
+        const override = (r.shield_decision === "WARN" || r.shield_decision === "BLOCK") && r.user_action === "CONFIRMED";
+        return `<tr>
+          <td>${r.logged_at}</td>
+          <td>${r.user_id}</td>
+          <td>₹${Number(r.amount).toLocaleString('en-IN')}</td>
+          <td>${r.payee}</td>
+          <td><span class="pill ${r.shield_decision}">${r.shield_decision}</span></td>
+          <td>${r.score}</td>
+          <td class="${r.user_action}">${r.user_action}</td>
+          <td>${override ? '<span class="flag">⚑ review</span>' : ''}</td>
+        </tr>`;
+      }).join("");
+    }
+
+    load();
+  </script>
+</body>
+</html>

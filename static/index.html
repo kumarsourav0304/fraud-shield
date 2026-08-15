@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Explainable Fraud Shield</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: #0f172a; color: #e2e8f0;
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; padding: 32px 16px;
+    }
+    h1 { font-size: 26px; margin-bottom: 4px; }
+    .subtitle { color: #94a3b8; margin-bottom: 12px; font-size: 14px; text-align:center; }
+    .nav-links { margin-bottom: 24px; font-size: 13px; text-align:center; }
+    .nav-links a { color: #60a5fa; text-decoration: none; }
+    .card {
+      background: #1e293b; border-radius: 16px; padding: 24px;
+      width: 100%; max-width: 460px; box-shadow: 0 10px 30px rgba(0,0,0,.4);
+      margin-bottom: 20px;
+    }
+    .card h2 { font-size: 15px; color: #cbd5e1; margin-bottom: 16px; font-weight: 600; }
+    label { display: block; font-size: 12px; color: #94a3b8; margin: 14px 0 4px; }
+    select, input {
+      width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #334155;
+      background: #0f172a; color: #e2e8f0; font-size: 14px;
+    }
+    button {
+      width: 100%; padding: 13px; border: none; border-radius: 8px; cursor: pointer;
+      font-size: 15px; font-weight: 600; margin-top: 18px;
+    }
+    .btn-pay { background: #3b82f6; color: white; }
+    .btn-pay:hover { background: #2563eb; }
+    .result { display: none; }
+    .badge {
+      display: inline-block; padding: 6px 14px; border-radius: 999px;
+      font-weight: 700; font-size: 14px; margin-bottom: 14px;
+    }
+    .APPROVE { background: #052e1b; color: #4ade80; border: 1px solid #16a34a; }
+    .WARN    { background: #3a2e05; color: #facc15; border: 1px solid #ca8a04; }
+    .BLOCK   { background: #3a0a0a; color: #f87171; border: 1px solid #dc2626; }
+    .score { font-size: 13px; color: #94a3b8; margin-bottom: 6px; }
+    .breakdown { font-size: 12px; color: #64748b; margin-bottom: 14px; }
+    .reasons { list-style: none; }
+    .reasons li {
+      background: #0f172a; border-left: 3px solid #64748b; padding: 9px 12px;
+      border-radius: 6px; margin-bottom: 8px; font-size: 13px; line-height: 1.4;
+    }
+    .reasons li.voice { border-left-color: #a855f7; }
+    .actions { display: flex; gap: 10px; margin-top: 18px; }
+    .actions button { margin-top: 0; }
+    .btn-confirm { background: #16a34a; color: white; }
+    .btn-cancel  { background: #475569; color: white; }
+    .logged { text-align: center; font-size: 13px; color: #4ade80; margin-top: 14px; display: none; }
+    .transcript-box {
+      background:#0f172a; border:1px solid #334155; border-radius:8px;
+      padding:10px 12px; font-size:12px; color:#94a3b8; margin-top:6px;
+      min-height:44px; line-height:1.4; white-space:pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>🛡️ Explainable Fraud Shield</h1>
+  <div class="subtitle">Real-time UPI fraud detection — payment behaviour + voice-phishing, with a reason for every decision</div>
+  <div class="nav-links">
+    <a href="/stats.html">📊 Live performance</a>
+    &nbsp;&nbsp;·&nbsp;&nbsp;
+    <a href="/review.html">🏦 Bank review console</a>
+  </div>
+
+  <div class="card">
+    <h2>Simulate a payment</h2>
+
+    <label>Payment scenario</label>
+    <select id="scenario">
+      <option value="safe">U001 — normal grocery payment (₹250)</option>
+      <option value="scam">U001 — ₹49,999 to unknown payee, new device, other city</option>
+      <option value="mild">U001 — ₹2,000 to a new payee, same device &amp; city</option>
+    </select>
+
+    <label>Phone call before this payment</label>
+    <select id="call">
+      <option value="none">No call — user paid on their own</option>
+      <option value="scamcall">Scam call — "bank official", OTP, urgent, don't tell anyone</option>
+      <option value="normalcall">Normal call — a friend about lunch</option>
+    </select>
+    <div class="transcript-box" id="transcriptBox">No call transcript.</div>
+
+    <button class="btn-pay" onclick="assess()">Check payment</button>
+  </div>
+
+  <div class="card result" id="resultCard">
+    <div id="badge" class="badge"></div>
+    <div class="score" id="score"></div>
+    <div class="breakdown" id="breakdown"></div>
+    <h2>Why the shield decided this</h2>
+    <ul class="reasons" id="reasons"></ul>
+
+    <div class="actions">
+      <button class="btn-confirm" onclick="decide('CONFIRMED')">Confirm payment</button>
+      <button class="btn-cancel" onclick="decide('CANCELLED')">Cancel</button>
+    </div>
+    <div class="logged" id="logged">✓ Decision recorded in audit log</div>
+  </div>
+
+  <script>
+    // Payment scenarios
+    const SCENARIOS = {
+      safe: { user_id: "U001", amount: 250,   payee: "merchant_grocery", city: "Ranchi",  device: "DEV-A1",     timestamp: "2026-08-15 14:30:00" },
+      scam: { user_id: "U001", amount: 49999, payee: "unknown_9284",     city: "Chennai", device: "DEV-NEW-77", timestamp: "2026-08-15 02:30:00" },
+      mild: { user_id: "U001", amount: 2000,  payee: "new_shop_88",      city: "Ranchi",  device: "DEV-A1",     timestamp: "2026-08-15 14:30:00" }
+    };
+
+    // Call transcripts
+    const CALLS = {
+      none: "",
+      scamcall: "Hello, I am calling from your bank. Your account is frozen due to suspicious activity. This is urgent, you must act now. Do not tell anyone about this call. Please share the OTP to verify and make a small refundable payment to unblock your account.",
+      normalcall: "Hey, are we still meeting for lunch tomorrow? I'll book the table for one o'clock. Let me know if that works."
+    };
+
+    // Show the chosen transcript under the dropdown
+    const callSelect = document.getElementById("call");
+    const tbox = document.getElementById("transcriptBox");
+    callSelect.addEventListener("change", () => {
+      const t = CALLS[callSelect.value];
+      tbox.textContent = t ? t : "No call transcript.";
+    });
+
+    let lastTx = null;
+    let lastResult = null;
+
+    async function assess() {
+      const tx = { ...SCENARIOS[document.getElementById("scenario").value] };
+      tx.transcript = CALLS[callSelect.value];
+      lastTx = tx;
+
+      const res = await fetch("/assess", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(tx)
+      });
+      const data = await res.json();
+      lastResult = data;
+
+      const badge = document.getElementById("badge");
+      badge.textContent = data.decision;
+      badge.className = "badge " + data.decision;
+
+      document.getElementById("score").textContent = "Risk score: " + data.score + " / 100";
+      document.getElementById("breakdown").textContent =
+        "Payment signals: " + data.payment_score + "   ·   Voice-phishing: " + data.voice_score + " (" + data.voice_level + ")";
+
+      const ul = document.getElementById("reasons");
+      ul.innerHTML = "";
+      data.reasons.forEach(r => {
+        const li = document.createElement("li");
+        li.textContent = r;
+        if (r.startsWith("Call red flag")) li.className = "voice";
+        ul.appendChild(li);
+      });
+
+      document.getElementById("resultCard").style.display = "block";
+      document.getElementById("logged").style.display = "none";
+    }
+
+    async function decide(action) {
+      if (!lastTx || !lastResult) return;
+      await fetch("/decision", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: lastTx.user_id,
+          amount: lastTx.amount,
+          payee: lastTx.payee,
+          decision: lastResult.decision,
+          score: lastResult.score,
+          user_action: action
+        })
+      });
+      document.getElementById("logged").style.display = "block";
+    }
+  </script>
+</body>
+</html>
