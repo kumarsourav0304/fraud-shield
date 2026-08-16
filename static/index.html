@@ -13,12 +13,12 @@
       align-items: center; padding: 32px 16px;
     }
     h1 { font-size: 26px; margin-bottom: 4px; }
-    .subtitle { color: #94a3b8; margin-bottom: 12px; font-size: 14px; text-align:center; }
+    .subtitle { color: #94a3b8; margin-bottom: 12px; font-size: 14px; text-align:center; max-width:520px; }
     .nav-links { margin-bottom: 24px; font-size: 13px; text-align:center; }
     .nav-links a { color: #60a5fa; text-decoration: none; }
     .card {
       background: #1e293b; border-radius: 16px; padding: 24px;
-      width: 100%; max-width: 460px; box-shadow: 0 10px 30px rgba(0,0,0,.4);
+      width: 100%; max-width: 480px; box-shadow: 0 10px 30px rgba(0,0,0,.4);
       margin-bottom: 20px;
     }
     .card h2 { font-size: 15px; color: #cbd5e1; margin-bottom: 16px; font-weight: 600; }
@@ -36,19 +36,73 @@
     .result { display: none; }
     .badge {
       display: inline-block; padding: 6px 14px; border-radius: 999px;
-      font-weight: 700; font-size: 14px; margin-bottom: 14px;
+      font-weight: 700; font-size: 14px; margin-bottom: 12px;
     }
     .APPROVE { background: #052e1b; color: #4ade80; border: 1px solid #16a34a; }
     .WARN    { background: #3a2e05; color: #facc15; border: 1px solid #ca8a04; }
     .BLOCK   { background: #3a0a0a; color: #f87171; border: 1px solid #dc2626; }
-    .score { font-size: 13px; color: #94a3b8; margin-bottom: 6px; }
-    .breakdown { font-size: 12px; color: #64748b; margin-bottom: 14px; }
-    .reasons { list-style: none; }
-    .reasons li {
-      background: #0f172a; border-left: 3px solid #64748b; padding: 9px 12px;
-      border-radius: 6px; margin-bottom: 8px; font-size: 13px; line-height: 1.4;
+    .score { font-size: 13px; color: #94a3b8; margin-bottom: 10px; }
+
+    .meta-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+    .chip {
+      font-size: 11px; padding: 4px 10px; border-radius: 999px;
+      border: 1px solid #334155; background:#0f172a; color:#94a3b8;
     }
-    .reasons li.voice { border-left-color: #a855f7; }
+    .chip.High   { border-color:#16a34a; color:#4ade80; }
+    .chip.Medium { border-color:#ca8a04; color:#facc15; }
+    .chip.Low    { border-color:#64748b; color:#94a3b8; }
+    .chip.latency { border-color:#3b82f6; color:#60a5fa; }
+
+    /* --- per-signal attribution --- */
+    .signals { list-style: none; }
+    .signal {
+      background: #0f172a; border-left: 3px solid #64748b; padding: 10px 12px;
+      border-radius: 6px; margin-bottom: 8px;
+    }
+    .signal.voice { border-left-color: #a855f7; }
+    .signal.access { border-left-color: #f97316; }
+    .signal-head {
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      font-size: 13px; font-weight: 600; color:#e2e8f0; margin-bottom:3px;
+    }
+    .pts {
+      font-size: 12px; font-weight: 700; color:#f87171;
+      background:#3a0a0a; border:1px solid #7f1d1d;
+      padding: 2px 8px; border-radius: 999px; white-space:nowrap;
+    }
+    .signal-reason { font-size: 12px; color:#94a3b8; line-height:1.45; }
+    .signal-evidence { font-size: 11px; color:#64748b; margin-top:4px; font-style: italic; }
+    .total-row {
+      display:flex; justify-content:space-between; font-size:13px;
+      font-weight:600; color:#cbd5e1; padding: 10px 12px;
+      border-top: 1px solid #334155; margin-top: 4px;
+    }
+    .no-signals { font-size:13px; color:#4ade80; background:#052e1b;
+      border-left:3px solid #16a34a; padding:10px 12px; border-radius:6px; }
+
+    /* --- privacy panel --- */
+    .privacy-toggle {
+      background:none; border:1px solid #334155; color:#94a3b8;
+      font-size:12px; padding:9px; margin-top:14px; font-weight:500;
+    }
+    .privacy-toggle:hover { border-color:#475569; color:#cbd5e1; }
+    .privacy-panel { display:none; margin-top:12px; }
+    .priv-group { margin-bottom:14px; }
+    .priv-title { font-size:12px; font-weight:600; margin-bottom:7px; }
+    .priv-title.out { color:#facc15; }
+    .priv-title.never { color:#4ade80; }
+    .priv-item {
+      background:#0f172a; border-radius:6px; padding:8px 10px;
+      margin-bottom:6px; font-size:12px;
+    }
+    .priv-field { color:#cbd5e1; font-weight:600; }
+    .priv-value { color:#60a5fa; font-family: ui-monospace, Menlo, monospace; font-size:11px; }
+    .priv-note { color:#64748b; font-size:11px; margin-top:2px; }
+    .priv-never {
+      display:inline-block; background:#052e1b; color:#4ade80; border:1px solid #14532d;
+      font-size:11px; padding:4px 9px; border-radius:999px; margin:0 5px 5px 0;
+    }
+
     .actions { display: flex; gap: 10px; margin-top: 18px; }
     .actions button { margin-top: 0; }
     .btn-confirm { background: #16a34a; color: white; }
@@ -59,11 +113,16 @@
       padding:10px 12px; font-size:12px; color:#94a3b8; margin-top:6px;
       min-height:44px; line-height:1.4; white-space:pre-wrap;
     }
+    #customFields { display:none; }
+    .toggle-row { display:flex; align-items:center; gap:9px; margin-top:14px; }
+    .toggle-row input { width:auto; }
+    .toggle-row label { margin:0; font-size:12px; color:#cbd5e1; }
+    .hint { font-size:11px; color:#64748b; margin-top:4px; line-height:1.4; }
   </style>
 </head>
 <body>
   <h1>🛡️ Explainable Fraud Shield</h1>
-  <div class="subtitle">Real-time UPI fraud detection — payment behaviour + voice-phishing, with a reason for every decision</div>
+  <div class="subtitle">Real-time UPI fraud detection — payment behaviour + voice-phishing, with a traceable reason and point value for every decision</div>
   <div class="nav-links">
     <a href="/stats.html">📊 Live performance</a>
     &nbsp;&nbsp;·&nbsp;&nbsp;
@@ -74,11 +133,42 @@
     <h2>Simulate a payment</h2>
 
     <label>Payment scenario</label>
-    <select id="scenario">
+    <select id="scenario" onchange="toggleCustom()">
       <option value="safe">U001 — normal grocery payment (₹250)</option>
       <option value="scam">U001 — ₹49,999 to unknown payee, new device, other city</option>
       <option value="mild">U001 — ₹2,000 to a new payee, same device &amp; city</option>
+      <option value="custom">✏️ Custom — build your own transaction</option>
     </select>
+
+    <div id="customFields">
+      <label>Amount (₹)</label>
+      <input type="number" id="cAmount" value="15000" min="1" />
+
+      <label>Payee</label>
+      <input type="text" id="cPayee" value="unknown_5521" />
+      <div class="hint">Known payees for U001 include <b>merchant_grocery</b>. Anything else counts as new.</div>
+
+      <label>City</label>
+      <input type="text" id="cCity" value="Ranchi" />
+
+      <label>Device</label>
+      <select id="cDevice">
+        <option value="DEV-A1">DEV-A1 — the user's usual device</option>
+        <option value="DEV-NEW-99">DEV-NEW-99 — never seen before</option>
+      </select>
+
+      <label>Time of payment</label>
+      <select id="cTime">
+        <option value="2026-08-15 14:30:00">Afternoon — 14:30</option>
+        <option value="2026-08-15 02:30:00">Late night — 02:30</option>
+      </select>
+
+      <div class="toggle-row">
+        <input type="checkbox" id="cAccess" />
+        <label for="cAccess">A screen-control app is active on the phone</label>
+      </div>
+      <div class="hint">Simulates a malicious app abusing Accessibility Services to approve payments remotely.</div>
+    </div>
 
     <label>Phone call before this payment</label>
     <select id="call">
@@ -94,9 +184,19 @@
   <div class="card result" id="resultCard">
     <div id="badge" class="badge"></div>
     <div class="score" id="score"></div>
-    <div class="breakdown" id="breakdown"></div>
-    <h2>Why the shield decided this</h2>
-    <ul class="reasons" id="reasons"></ul>
+
+    <div class="meta-row" id="metaRow"></div>
+
+    <h2>Why the shield decided this — signal by signal</h2>
+    <ul class="signals" id="signals"></ul>
+    <div class="total-row" id="totalRow" style="display:none;">
+      <span>Total risk score</span><span id="totalScore"></span>
+    </div>
+
+    <button class="privacy-toggle" onclick="togglePrivacy()" id="privBtn">
+      🔒 What data left this phone?
+    </button>
+    <div class="privacy-panel" id="privacyPanel"></div>
 
     <div class="actions">
       <button class="btn-confirm" onclick="decide('CONFIRMED')">Confirm payment</button>
@@ -106,21 +206,18 @@
   </div>
 
   <script>
-    // Payment scenarios
     const SCENARIOS = {
       safe: { user_id: "U001", amount: 250,   payee: "merchant_grocery", city: "Ranchi",  device: "DEV-A1",     timestamp: "2026-08-15 14:30:00" },
       scam: { user_id: "U001", amount: 49999, payee: "unknown_9284",     city: "Chennai", device: "DEV-NEW-77", timestamp: "2026-08-15 02:30:00" },
       mild: { user_id: "U001", amount: 2000,  payee: "new_shop_88",      city: "Ranchi",  device: "DEV-A1",     timestamp: "2026-08-15 14:30:00" }
     };
 
-    // Call transcripts
     const CALLS = {
       none: "",
       scamcall: "Hello, I am calling from your bank. Your account is frozen due to suspicious activity. This is urgent, you must act now. Do not tell anyone about this call. Please share the OTP to verify and make a small refundable payment to unblock your account.",
       normalcall: "Hey, are we still meeting for lunch tomorrow? I'll book the table for one o'clock. Let me know if that works."
     };
 
-    // Show the chosen transcript under the dropdown
     const callSelect = document.getElementById("call");
     const tbox = document.getElementById("transcriptBox");
     callSelect.addEventListener("change", () => {
@@ -128,11 +225,36 @@
       tbox.textContent = t ? t : "No call transcript.";
     });
 
-    let lastTx = null;
-    let lastResult = null;
+    function toggleCustom() {
+      const isCustom = document.getElementById("scenario").value === "custom";
+      document.getElementById("customFields").style.display = isCustom ? "block" : "none";
+    }
+
+    function buildTx() {
+      const choice = document.getElementById("scenario").value;
+      if (choice !== "custom") return { ...SCENARIOS[choice] };
+      return {
+        user_id: "U001",
+        amount: Number(document.getElementById("cAmount").value) || 0,
+        payee: document.getElementById("cPayee").value.trim() || "unknown_payee",
+        city: document.getElementById("cCity").value.trim() || "Ranchi",
+        device: document.getElementById("cDevice").value,
+        timestamp: document.getElementById("cTime").value,
+        accessibility_service_active: document.getElementById("cAccess").checked
+      };
+    }
+
+    let lastTx = null, lastResult = null;
+
+    function signalClass(code) {
+      if (!code) return "";
+      if (code.indexOf("voice") === 0 || code.indexOf("call") === 0) return " voice";
+      if (code.indexOf("access") === 0) return " access";
+      return "";
+    }
 
     async function assess() {
-      const tx = { ...SCENARIOS[document.getElementById("scenario").value] };
+      const tx = buildTx();
       tx.transcript = CALLS[callSelect.value];
       lastTx = tx;
 
@@ -148,21 +270,134 @@
       badge.textContent = data.decision;
       badge.className = "badge " + data.decision;
 
-      document.getElementById("score").textContent = "Risk score: " + data.score + " / 100";
-      document.getElementById("breakdown").textContent =
-        "Payment signals: " + data.payment_score + "   ·   Voice-phishing: " + data.voice_score + " (" + data.voice_level + ")";
+      let scoreLine = "Risk score: " + data.score + " / 100";
+      if (data.thresholds) {
+        scoreLine += "   (warn at " + data.thresholds.warn_at +
+                     ", block at " + data.thresholds.block_at + ")";
+      }
+      document.getElementById("score").textContent = scoreLine;
 
-      const ul = document.getElementById("reasons");
+      // --- meta chips: confidence, latency, voice split ---
+      const meta = document.getElementById("metaRow");
+      meta.innerHTML = "";
+      if (data.confidence) {
+        const c = document.createElement("span");
+        c.className = "chip " + data.confidence.level;
+        c.textContent = "Confidence: " + data.confidence.level + " — " + data.confidence.note;
+        meta.appendChild(c);
+      }
+      if (data.latency_ms !== undefined) {
+        const l = document.createElement("span");
+        l.className = "chip latency";
+        l.textContent = "⚡ Scored in " + data.latency_ms + " ms";
+        meta.appendChild(l);
+      }
+      if (data.payment_score !== undefined) {
+        const s = document.createElement("span");
+        s.className = "chip";
+        s.textContent = "Payment " + data.payment_score + " · Voice " +
+                        (data.voice_score || 0) + " (" + (data.voice_level || "none") + ")";
+        meta.appendChild(s);
+      }
+
+      // --- per-signal attribution, with graceful fallback ---
+      const ul = document.getElementById("signals");
       ul.innerHTML = "";
-      data.reasons.forEach(r => {
+      const totalRow = document.getElementById("totalRow");
+
+      if (Array.isArray(data.signals) && data.signals.length > 0) {
+        data.signals.forEach(s => {
+          const li = document.createElement("li");
+          li.className = "signal" + signalClass(s.code);
+          li.innerHTML =
+            '<div class="signal-head"><span></span><span class="pts"></span></div>' +
+            '<div class="signal-reason"></div>' +
+            (s.evidence ? '<div class="signal-evidence"></div>' : '');
+          li.querySelector(".signal-head span:first-child").textContent = s.label || s.code;
+          li.querySelector(".pts").textContent = "+" + s.points + " risk";
+          li.querySelector(".signal-reason").textContent = s.reason || "";
+          if (s.evidence) li.querySelector(".signal-evidence").textContent = "Evidence: " + s.evidence;
+          ul.appendChild(li);
+        });
+        let totalTxt = data.score + " / 100";
+        if (data.capped) totalTxt += "  (raw " + data.raw_score + ", capped)";
+        document.getElementById("totalScore").textContent = totalTxt;
+        totalRow.style.display = "flex";
+      } else if (Array.isArray(data.reasons) && data.reasons.length > 0) {
+        // fallback: older API shape without per-signal points
+        data.reasons.forEach(r => {
+          const li = document.createElement("li");
+          li.className = "signal" + (r.indexOf("Call red flag") === 0 ? " voice" : "");
+          li.innerHTML = '<div class="signal-reason"></div>';
+          li.querySelector(".signal-reason").textContent = r;
+          ul.appendChild(li);
+        });
+        totalRow.style.display = "none";
+      } else {
         const li = document.createElement("li");
-        li.textContent = r;
-        if (r.startsWith("Call red flag")) li.className = "voice";
+        li.className = "no-signals";
+        li.textContent = "No risk signals fired — this matches the user's normal behaviour.";
         ul.appendChild(li);
-      });
+        totalRow.style.display = "none";
+      }
+
+      // --- privacy manifest ---
+      renderPrivacy(data.privacy);
 
       document.getElementById("resultCard").style.display = "block";
       document.getElementById("logged").style.display = "none";
+    }
+
+    function renderPrivacy(priv) {
+      const panel = document.getElementById("privacyPanel");
+      const btn = document.getElementById("privBtn");
+      panel.innerHTML = "";
+      panel.style.display = "none";
+      btn.textContent = "🔒 What data left this phone?";
+
+      if (!priv) { btn.style.display = "none"; return; }
+      btn.style.display = "block";
+
+      const outGroup = document.createElement("div");
+      outGroup.className = "priv-group";
+      const outTitle = document.createElement("div");
+      outTitle.className = "priv-title out";
+      outTitle.textContent = "↗ Sent to the risk service";
+      outGroup.appendChild(outTitle);
+
+      (priv.transmitted || []).forEach(item => {
+        const d = document.createElement("div");
+        d.className = "priv-item";
+        d.innerHTML = '<span class="priv-field"></span>: <span class="priv-value"></span>' +
+                      '<div class="priv-note"></div>';
+        d.querySelector(".priv-field").textContent = item.field;
+        d.querySelector(".priv-value").textContent = item.value;
+        d.querySelector(".priv-note").textContent = item.note || "";
+        outGroup.appendChild(d);
+      });
+      panel.appendChild(outGroup);
+
+      const neverGroup = document.createElement("div");
+      neverGroup.className = "priv-group";
+      const nTitle = document.createElement("div");
+      nTitle.className = "priv-title never";
+      nTitle.textContent = "✕ Never leaves the device";
+      neverGroup.appendChild(nTitle);
+      (priv.never_transmitted || []).forEach(txt => {
+        const tag = document.createElement("span");
+        tag.className = "priv-never";
+        tag.textContent = txt;
+        neverGroup.appendChild(tag);
+      });
+      panel.appendChild(neverGroup);
+    }
+
+    function togglePrivacy() {
+      const panel = document.getElementById("privacyPanel");
+      const btn = document.getElementById("privBtn");
+      const open = panel.style.display === "block";
+      panel.style.display = open ? "none" : "block";
+      btn.textContent = open ? "🔒 What data left this phone?" : "🔒 Hide data detail";
     }
 
     async function decide(action) {
@@ -176,7 +411,9 @@
           payee: lastTx.payee,
           decision: lastResult.decision,
           score: lastResult.score,
-          user_action: action
+          user_action: action,
+          confidence: (lastResult.confidence && lastResult.confidence.level) || "",
+          signal_count: (lastResult.signals || []).length
         })
       });
       document.getElementById("logged").style.display = "block";

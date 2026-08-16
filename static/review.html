@@ -11,16 +11,19 @@
       background: #0f172a; color: #e2e8f0; padding: 32px 24px; min-height: 100vh;
     }
     h1 { font-size: 24px; margin-bottom: 4px; }
-    .subtitle { color: #94a3b8; font-size: 14px; margin-bottom: 24px; }
+    .subtitle { color: #94a3b8; font-size: 14px; margin-bottom: 24px; max-width: 640px; }
     .nav a { color: #60a5fa; text-decoration: none; font-size: 13px; }
     .cards { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
     .stat {
-      background: #1e293b; border-radius: 12px; padding: 18px 22px; min-width: 150px; flex: 1;
+      background: #1e293b; border-radius: 12px; padding: 18px 22px; min-width: 140px; flex: 1;
     }
     .stat .num { font-size: 30px; font-weight: 700; }
     .stat .lbl { font-size: 12px; color: #94a3b8; margin-top: 4px; }
     .n-total { color: #e2e8f0; } .n-block { color: #f87171; }
     .n-warn { color: #facc15; } .n-over { color: #a855f7; }
+    .n-fraud { color: #f87171; } .n-legit { color: #4ade80; } .n-pending { color: #60a5fa; }
+    .section-label { font-size: 12px; color: #64748b; text-transform: uppercase;
+      letter-spacing: .5px; margin: 4px 0 8px; }
     .controls { margin-bottom: 14px; }
     .controls button {
       background: #1e293b; color: #cbd5e1; border: 1px solid #334155; border-radius: 8px;
@@ -28,7 +31,7 @@
     }
     .controls button.active { background: #3b82f6; color: white; border-color: #3b82f6; }
     table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 12px; overflow: hidden; }
-    th, td { text-align: left; padding: 12px 14px; font-size: 13px; border-bottom: 1px solid #334155; }
+    th, td { text-align: left; padding: 12px 14px; font-size: 13px; border-bottom: 1px solid #334155; vertical-align: middle; }
     th { background: #16223a; color: #94a3b8; font-weight: 600; }
     tr:last-child td { border-bottom: none; }
     .pill { padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
@@ -38,26 +41,58 @@
     .CONFIRMED { color: #4ade80; } .CANCELLED { color: #94a3b8; }
     .flag { color: #a855f7; font-size: 12px; }
     .empty { color: #64748b; padding: 20px; text-align: center; }
+
+    /* outcome column */
+    .outcome-tag { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+    .o-PENDING { background: #0b2540; color: #60a5fa; border: 1px solid #1e40af; }
+    .o-CONFIRMED_FRAUD { background: #3a0a0a; color: #f87171; border: 1px solid #7f1d1d; }
+    .o-CONFIRMED_LEGITIMATE { background: #052e1b; color: #4ade80; border: 1px solid #14532d; }
+    .outcome-btns { display: flex; gap: 6px; margin-top: 6px; }
+    .obtn {
+      font-size: 11px; padding: 4px 8px; border-radius: 6px; cursor: pointer;
+      border: 1px solid #334155; background: #0f172a; color: #cbd5e1; font-weight: 600;
+    }
+    .obtn.fraud:hover  { border-color: #dc2626; color: #f87171; }
+    .obtn.legit:hover  { border-color: #16a34a; color: #4ade80; }
+    .obtn.clear:hover  { border-color: #475569; color: #94a3b8; }
+    .obtn:disabled { opacity: .4; cursor: default; }
+    .help {
+      background: #16223a; border-left: 3px solid #3b82f6; border-radius: 8px;
+      padding: 12px 14px; font-size: 12px; color: #94a3b8; margin-bottom: 20px; line-height: 1.5;
+    }
   </style>
 </head>
 <body>
   <div class="nav"><a href="/">← Back to payment shield</a></div>
   <h1>🏦 Bank Review Console</h1>
-  <div class="subtitle">Every shield decision and the user's response — for false-positive review and audit.</div>
+  <div class="subtitle">Every shield decision and the user's response — for false-positive review and audit. Reviewers can mark what a flagged payment actually turned out to be, closing the feedback loop.</div>
 
+  <div class="section-label">Decision volume</div>
   <div class="cards" id="cards"></div>
+
+  <div class="section-label">Reviewer feedback loop</div>
+  <div class="cards" id="feedbackCards"></div>
+
+  <div class="help">
+    <b>How review works:</b> the shield flags a payment; the user may override and pay anyway.
+    A reviewer then confirms whether it was really fraud or a false alarm. These confirmations are
+    the labelled data a production system would learn from — and let the bank measure the shield's
+    real-world false-positive rate over time.
+  </div>
 
   <div class="controls">
     <button id="btn-all" class="active" onclick="setFilter('all')">All decisions</button>
     <button id="btn-flagged" onclick="setFilter('flagged')">Flagged only (WARN/BLOCK)</button>
     <button id="btn-override" onclick="setFilter('override')">Overrides (paid despite warning)</button>
+    <button id="btn-pending" onclick="setFilter('pending')">Awaiting review</button>
   </div>
 
   <table>
     <thead>
       <tr>
         <th>Logged at</th><th>User</th><th>Amount</th><th>Payee</th>
-        <th>Shield decision</th><th>Score</th><th>User action</th><th>Review flag</th>
+        <th>Shield decision</th><th>Score</th><th>Conf.</th><th>User action</th>
+        <th>Review flag</th><th>Actual outcome</th>
       </tr>
     </thead>
     <tbody id="tbody"></tbody>
@@ -70,14 +105,21 @@
     async function load() {
       const res = await fetch("/audit");
       const data = await res.json();
-      allRows = data.rows;
+      // attach each row's index in the newest-first order the API returns,
+      // so /outcome can locate the right record
+      allRows = data.rows.map((r, i) => ({ ...r, _index: i }));
 
       const s = data.summary;
       document.getElementById("cards").innerHTML = `
         <div class="stat"><div class="num n-total">${s.total}</div><div class="lbl">Total decisions logged</div></div>
         <div class="stat"><div class="num n-block">${s.blocked}</div><div class="lbl">Blocked by shield</div></div>
         <div class="stat"><div class="num n-warn">${s.warned}</div><div class="lbl">Warned</div></div>
-        <div class="stat"><div class="num n-over">${s.overrides}</div><div class="lbl">Paid despite warning (needs review)</div></div>
+        <div class="stat"><div class="num n-over">${s.overrides}</div><div class="lbl">Paid despite warning</div></div>
+      `;
+      document.getElementById("feedbackCards").innerHTML = `
+        <div class="stat"><div class="num n-fraud">${s.confirmed_fraud || 0}</div><div class="lbl">Confirmed fraud</div></div>
+        <div class="stat"><div class="num n-legit">${s.confirmed_legitimate || 0}</div><div class="lbl">Confirmed legitimate (false alarm)</div></div>
+        <div class="stat"><div class="num n-pending">${s.pending_review || 0}</div><div class="lbl">Awaiting reviewer decision</div></div>
       `;
       render();
     }
@@ -85,18 +127,45 @@
     function setFilter(f) {
       filter = f;
       document.querySelectorAll(".controls button").forEach(b => b.classList.remove("active"));
-      document.getElementById("btn-" + (f === "all" ? "all" : f === "flagged" ? "flagged" : "override")).classList.add("active");
+      document.getElementById("btn-" + f).classList.add("active");
       render();
+    }
+
+    async function setOutcome(index, outcome) {
+      await fetch("/outcome", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ row_index: index, outcome: outcome })
+      });
+      load();  // refresh counts + row state
+    }
+
+    function outcomeCell(r) {
+      const current = r.outcome || "PENDING";
+      const tag = `<span class="outcome-tag o-${current}">${current.replace(/_/g, ' ')}</span>`;
+
+      // Only flagged rows are reviewable — an APPROVE never needed review
+      const flagged = r.shield_decision === "WARN" || r.shield_decision === "BLOCK";
+      if (!flagged) return tag;
+
+      const btns = `
+        <div class="outcome-btns">
+          <button class="obtn fraud" onclick="setOutcome(${r._index}, 'CONFIRMED_FRAUD')">Fraud</button>
+          <button class="obtn legit" onclick="setOutcome(${r._index}, 'CONFIRMED_LEGITIMATE')">Legit</button>
+          <button class="obtn clear" onclick="setOutcome(${r._index}, 'PENDING')">Reset</button>
+        </div>`;
+      return tag + btns;
     }
 
     function render() {
       let rows = allRows;
-      if (filter === "flagged") rows = rows.filter(r => r.shield_decision === "WARN" || r.shield_decision === "BLOCK");
+      if (filter === "flagged")  rows = rows.filter(r => r.shield_decision === "WARN" || r.shield_decision === "BLOCK");
       if (filter === "override") rows = rows.filter(r => (r.shield_decision === "WARN" || r.shield_decision === "BLOCK") && r.user_action === "CONFIRMED");
+      if (filter === "pending")  rows = rows.filter(r => (r.shield_decision === "WARN" || r.shield_decision === "BLOCK") && (r.outcome || "PENDING") === "PENDING");
 
       const tbody = document.getElementById("tbody");
       if (rows.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="empty">No matching decisions.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="empty">No matching decisions.</td></tr>`;
         return;
       }
       tbody.innerHTML = rows.map(r => {
@@ -108,8 +177,10 @@
           <td>${r.payee}</td>
           <td><span class="pill ${r.shield_decision}">${r.shield_decision}</span></td>
           <td>${r.score}</td>
+          <td>${r.confidence || '—'}</td>
           <td class="${r.user_action}">${r.user_action}</td>
           <td>${override ? '<span class="flag">⚑ review</span>' : ''}</td>
+          <td>${outcomeCell(r)}</td>
         </tr>`;
       }).join("");
     }
