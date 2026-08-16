@@ -101,10 +101,40 @@
     let allRows = [];
     let filter = "all";
 
-    // display label for the internal decision code
+    // ---------------------------------------------------------------
+    // SECURITY: every value that came from a user (payee, user_id,
+    // amounts, decisions) is escaped before it is placed into innerHTML.
+    // Without this, a payee named  <img src=x onerror=...>  would run
+    // as script inside the reviewer's browser - a stored XSS, seeded
+    // through the payment form and fired in the bank console.
+    // ---------------------------------------------------------------
+    function esc(value) {
+      if (value === null || value === undefined) return "";
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    // Values used inside HTML attributes or CSS class names are
+    // additionally restricted to a known-safe character set.
+    function safeToken(value) {
+      return String(value || "").replace(/[^A-Za-z0-9_-]/g, "");
+    }
+
     function decisionLabel(code) {
       if (code === "BLOCK") return "HIGH RISK";
-      return code;  // WARN, APPROVE unchanged
+      if (code === "WARN") return "WARN";
+      if (code === "APPROVE") return "APPROVE";
+      return esc(code);
+    }
+
+    function formatAmount(value) {
+      const n = Number(value);
+      if (!isFinite(n)) return esc(value);
+      return "₹" + n.toLocaleString("en-IN");
     }
 
     async function load() {
@@ -114,15 +144,15 @@
 
       const s = data.summary;
       document.getElementById("cards").innerHTML = `
-        <div class="stat"><div class="num n-total">${s.total}</div><div class="lbl">Total decisions logged</div></div>
-        <div class="stat"><div class="num n-block">${s.blocked}</div><div class="lbl">Highest-risk warnings</div></div>
-        <div class="stat"><div class="num n-warn">${s.warned}</div><div class="lbl">Warned</div></div>
-        <div class="stat"><div class="num n-over">${s.overrides}</div><div class="lbl">Confirmed despite warning</div></div>
+        <div class="stat"><div class="num n-total">${esc(s.total)}</div><div class="lbl">Total decisions logged</div></div>
+        <div class="stat"><div class="num n-block">${esc(s.blocked)}</div><div class="lbl">Highest-risk warnings</div></div>
+        <div class="stat"><div class="num n-warn">${esc(s.warned)}</div><div class="lbl">Warned</div></div>
+        <div class="stat"><div class="num n-over">${esc(s.overrides)}</div><div class="lbl">Confirmed despite warning</div></div>
       `;
       document.getElementById("feedbackCards").innerHTML = `
-        <div class="stat"><div class="num n-fraud">${s.confirmed_fraud || 0}</div><div class="lbl">Confirmed fraud</div></div>
-        <div class="stat"><div class="num n-legit">${s.confirmed_legitimate || 0}</div><div class="lbl">Confirmed legitimate (false alarm)</div></div>
-        <div class="stat"><div class="num n-pending">${s.pending_review || 0}</div><div class="lbl">Awaiting reviewer decision</div></div>
+        <div class="stat"><div class="num n-fraud">${esc(s.confirmed_fraud || 0)}</div><div class="lbl">Confirmed fraud</div></div>
+        <div class="stat"><div class="num n-legit">${esc(s.confirmed_legitimate || 0)}</div><div class="lbl">Confirmed legitimate (false alarm)</div></div>
+        <div class="stat"><div class="num n-pending">${esc(s.pending_review || 0)}</div><div class="lbl">Awaiting reviewer decision</div></div>
       `;
       render();
     }
@@ -138,21 +168,22 @@
       await fetch("/outcome", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ row_index: index, outcome: outcome })
+        body: JSON.stringify({ row_index: Number(index), outcome: String(outcome) })
       });
       load();
     }
 
     function outcomeCell(r) {
-      const current = r.outcome || "PENDING";
-      const tag = `<span class="outcome-tag o-${current}">${current.replace(/_/g, ' ')}</span>`;
+      const current = safeToken(r.outcome || "PENDING") || "PENDING";
+      const tag = `<span class="outcome-tag o-${current}">${esc(current.replace(/_/g, ' '))}</span>`;
       const flagged = r.shield_decision === "WARN" || r.shield_decision === "BLOCK";
       if (!flagged) return tag;
+      const idx = Number(r._index);
       const btns = `
         <div class="outcome-btns">
-          <button class="obtn fraud" onclick="setOutcome(${r._index}, 'CONFIRMED_FRAUD')">Fraud</button>
-          <button class="obtn legit" onclick="setOutcome(${r._index}, 'CONFIRMED_LEGITIMATE')">Legit</button>
-          <button class="obtn clear" onclick="setOutcome(${r._index}, 'PENDING')">Reset</button>
+          <button class="obtn fraud" onclick="setOutcome(${idx}, 'CONFIRMED_FRAUD')">Fraud</button>
+          <button class="obtn legit" onclick="setOutcome(${idx}, 'CONFIRMED_LEGITIMATE')">Legit</button>
+          <button class="obtn clear" onclick="setOutcome(${idx}, 'PENDING')">Reset</button>
         </div>`;
       return tag + btns;
     }
@@ -170,15 +201,17 @@
       }
       tbody.innerHTML = rows.map(r => {
         const override = (r.shield_decision === "WARN" || r.shield_decision === "BLOCK") && r.user_action === "CONFIRMED";
+        const decisionClass = safeToken(r.shield_decision);
+        const actionClass = safeToken(r.user_action);
         return `<tr>
-          <td>${r.logged_at}</td>
-          <td>${r.user_id}</td>
-          <td>₹${Number(r.amount).toLocaleString('en-IN')}</td>
-          <td>${r.payee}</td>
-          <td><span class="pill ${r.shield_decision}">${decisionLabel(r.shield_decision)}</span></td>
-          <td>${r.score}</td>
-          <td>${r.confidence || '—'}</td>
-          <td class="${r.user_action}">${r.user_action}</td>
+          <td>${esc(r.logged_at)}</td>
+          <td>${esc(r.user_id)}</td>
+          <td>${formatAmount(r.amount)}</td>
+          <td>${esc(r.payee)}</td>
+          <td><span class="pill ${decisionClass}">${decisionLabel(r.shield_decision)}</span></td>
+          <td>${esc(r.score)}</td>
+          <td>${esc(r.confidence || '—')}</td>
+          <td class="${actionClass}">${esc(r.user_action)}</td>
           <td>${override ? '<span class="flag">⚑ review</span>' : ''}</td>
           <td>${outcomeCell(r)}</td>
         </tr>`;

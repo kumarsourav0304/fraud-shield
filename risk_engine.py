@@ -13,7 +13,9 @@ Given one transaction plus the user's normal history, it returns:
 No black box: every point of risk is traceable to a named rule.
 """
 
-import hashlib
+import hmac
+import os
+from datetime import datetime
 import time
 
 # ---------------------------------------------------------------------------
@@ -108,17 +110,36 @@ BORDERLINE_MARGIN = 8
 
 # ---------------------------------------------------------------------------
 # PRIVACY
+#
+# Pseudonymisation uses KEYED hashing (HMAC), not a bare hash.
+# A plain SHA-256 of a payee name is trivially reversible: the space of
+# payee and device IDs is small, so anyone can hash every candidate and
+# build a lookup table. HMAC with a secret the attacker doesn't have
+# removes that shortcut, so the fingerprint is genuinely non-reversible
+# by an outsider - which is what the privacy panel claims on screen.
+#
+# The key comes from the PSEUDO_KEY environment variable. If it isn't set,
+# a fresh random key is generated per process: fingerprints then stay
+# consistent within a session but change on restart. That is the safe
+# default - a hardcoded fallback key in a public repo would be no better
+# than no key at all.
 # ---------------------------------------------------------------------------
+PSEUDO_KEY = os.environ.get("PSEUDO_KEY") or os.urandom(32).hex()
+
+
 def pseudonymise(value):
     """
     Turn an identifier into a short irreversible fingerprint.
     Used so payee IDs and device IDs can be compared and logged
-    WITHOUT storing the real value anywhere.
+    WITHOUT storing or transmitting the real value.
     """
     if value is None:
         return None
-    digest = hashlib.sha256(str(value).encode("utf-8")).hexdigest()
-    return digest[:12]
+    return hmac.new(
+        PSEUDO_KEY.encode("utf-8"),
+        str(value).encode("utf-8"),
+        "sha256",
+    ).hexdigest()[:12]
 
 
 def privacy_manifest(tx):
@@ -130,9 +151,10 @@ def privacy_manifest(tx):
     return {
         "transmitted": [
             {"field": "payee fingerprint", "value": pseudonymise(tx.get("payee")),
-             "note": "irreversible hash - the real payee ID is never sent"},
+             "note": "keyed HMAC - the real payee ID is never sent and cannot be "
+                     "reversed without the server secret"},
             {"field": "device fingerprint", "value": pseudonymise(tx.get("device")),
-             "note": "irreversible hash - device identity is never sent"},
+             "note": "keyed HMAC - device identity is never sent"},
             {"field": "amount band", "value": amount_band(tx.get("amount")),
              "note": "bucketed range, not the exact rupee value"},
             {"field": "derived risk flags", "value": "true/false only",
@@ -164,6 +186,39 @@ def amount_band(amount):
     if amount < 100000:
         return "Rs 25,000 - 1,00,000"
     return "over Rs 1,00,000"
+
+
+# ---------------------------------------------------------------------------
+# TIMESTAMP PARSING
+#
+# Parsed properly rather than by splitting on spaces and colons. String
+# splitting silently failed on any other format - notably the ISO form
+# "2026-08-15T02:30:00" - which meant the late-night rule could be skipped
+# entirely just by changing the separator. Real parsing closes that gap.
+# ---------------------------------------------------------------------------
+def extract_hour(timestamp):
+    """Return the hour (0-23) from a timestamp, or None if unparseable."""
+    if not timestamp:
+        return None
+
+    text = str(timestamp).strip()
+
+    # Handles both "2026-08-15 02:30:00" and "2026-08-15T02:30:00",
+    # with or without timezone suffixes.
+    try:
+        return datetime.fromisoformat(text.replace("Z", "+00:00")).hour
+    except ValueError:
+        pass
+
+    # Fall back to a few common explicit formats before giving up.
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S",
+                "%Y/%m/%d %H:%M:%S", "%d-%m-%Y %H:%M:%S"):
+        try:
+            return datetime.strptime(text, fmt).hour
+        except ValueError:
+            continue
+
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -271,11 +326,8 @@ def assess_transaction(tx, profile):
             f"of Rs {typical:,.0f}"
         )
 
-    # Rule 5: odd hour (timestamp looks like "2026-08-14 02:30:00")
-    try:
-        hour = int(tx["timestamp"].split(" ")[1].split(":")[0])
-    except (KeyError, IndexError, ValueError):
-        hour = None
+    # Rule 5: odd hour - parsed properly so alternate formats can't bypass it
+    hour = extract_hour(tx.get("timestamp"))
     if hour is not None and 0 <= hour < 5:
         fired.append("odd_hour")
         evidence["odd_hour"] = f"Payment attempted at {hour:02d}:xx"
