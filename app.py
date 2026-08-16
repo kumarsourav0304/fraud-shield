@@ -28,6 +28,7 @@ from risk_engine import (
     assess_transaction,
     merge_external_signals,
     privacy_manifest,
+    decision_display,
     WARN_AT,
     BLOCK_AT,
 )
@@ -143,6 +144,7 @@ def assess(tx: Transaction):
             "confidence": {"level": "Low",
                            "note": "No history for this user yet",
                            "borderline": False},
+            "display": decision_display("APPROVE"),
             "thresholds": {"warn_at": WARN_AT, "block_at": BLOCK_AT},
             "privacy": privacy_manifest(tx_data),
             "latency_ms": 0.0,
@@ -175,6 +177,7 @@ def assess(tx: Transaction):
         "raw_score": result["raw_score"],
         "capped": result["capped"],
         "confidence": result["confidence"],
+        "display": result.get("display", {}),
         "thresholds": {"warn_at": WARN_AT, "block_at": BLOCK_AT},
         "privacy": payment["privacy"],
         "latency_ms": total_latency,

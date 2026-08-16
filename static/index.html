@@ -34,15 +34,30 @@
     .btn-pay { background: #3b82f6; color: white; }
     .btn-pay:hover { background: #2563eb; }
     .result { display: none; }
-    .badge {
-      display: inline-block; padding: 6px 14px; border-radius: 999px;
-      font-weight: 700; font-size: 14px; margin-bottom: 12px;
-    }
-    .APPROVE { background: #052e1b; color: #4ade80; border: 1px solid #16a34a; }
-    .WARN    { background: #3a2e05; color: #facc15; border: 1px solid #ca8a04; }
-    .BLOCK   { background: #3a0a0a; color: #f87171; border: 1px solid #dc2626; }
-    .score { font-size: 13px; color: #94a3b8; margin-bottom: 10px; }
 
+    /* plain-language verdict banner */
+    .verdict {
+      border-radius: 12px; padding: 16px 18px; margin-bottom: 14px;
+    }
+    .verdict-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+    .verdict-plain { font-size: 13px; line-height: 1.5; }
+    .verdict-hint { font-size: 12px; margin-top: 8px; opacity: .9; font-style: italic; }
+    .v-APPROVE { background: #052e1b; border: 1px solid #16a34a; }
+    .v-APPROVE .verdict-title { color: #4ade80; }
+    .v-WARN { background: #3a2e05; border: 1px solid #ca8a04; }
+    .v-WARN .verdict-title { color: #facc15; }
+    .v-BLOCK { background: #3a0a0a; border: 1px solid #dc2626; }
+    .v-BLOCK .verdict-title { color: #f87171; }
+    .verdict-plain, .verdict-hint { color: #e2e8f0; }
+
+    .details-toggle {
+      background:none; border:1px solid #334155; color:#94a3b8;
+      font-size:12px; padding:8px; margin-top:0; margin-bottom:6px; font-weight:500;
+    }
+    .details-toggle:hover { border-color:#475569; color:#cbd5e1; }
+    .tech-view { display:none; }
+
+    .score { font-size: 13px; color: #94a3b8; margin-bottom: 10px; }
     .meta-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
     .chip {
       font-size: 11px; padding: 4px 10px; border-radius: 999px;
@@ -53,7 +68,6 @@
     .chip.Low    { border-color:#64748b; color:#94a3b8; }
     .chip.latency { border-color:#3b82f6; color:#60a5fa; }
 
-    /* --- per-signal attribution --- */
     .signals { list-style: none; }
     .signal {
       background: #0f172a; border-left: 3px solid #64748b; padding: 10px 12px;
@@ -80,7 +94,6 @@
     .no-signals { font-size:13px; color:#4ade80; background:#052e1b;
       border-left:3px solid #16a34a; padding:10px 12px; border-radius:6px; }
 
-    /* --- privacy panel --- */
     .privacy-toggle {
       background:none; border:1px solid #334155; color:#94a3b8;
       font-size:12px; padding:9px; margin-top:14px; font-weight:500;
@@ -122,7 +135,7 @@
 </head>
 <body>
   <h1>🛡️ Explainable Fraud Shield</h1>
-  <div class="subtitle">Real-time UPI fraud detection — payment behaviour + voice-phishing, with a traceable reason and point value for every decision</div>
+  <div class="subtitle">Real-time UPI fraud detection — payment behaviour + voice-phishing, with a plain-language warning and a reason for every decision. The user always makes the final call.</div>
   <div class="nav-links">
     <a href="/stats.html">📊 Live performance</a>
     &nbsp;&nbsp;·&nbsp;&nbsp;
@@ -182,21 +195,31 @@
   </div>
 
   <div class="card result" id="resultCard">
-    <div id="badge" class="badge"></div>
-    <div class="score" id="score"></div>
-
-    <div class="meta-row" id="metaRow"></div>
-
-    <h2>Why the shield decided this — signal by signal</h2>
-    <ul class="signals" id="signals"></ul>
-    <div class="total-row" id="totalRow" style="display:none;">
-      <span>Total risk score</span><span id="totalScore"></span>
+    <!-- plain-language verdict, always visible -->
+    <div class="verdict" id="verdict">
+      <div class="verdict-title" id="verdictTitle"></div>
+      <div class="verdict-plain" id="verdictPlain"></div>
+      <div class="verdict-hint" id="verdictHint"></div>
     </div>
 
-    <button class="privacy-toggle" onclick="togglePrivacy()" id="privBtn">
-      🔒 What data left this phone?
-    </button>
-    <div class="privacy-panel" id="privacyPanel"></div>
+    <button class="details-toggle" onclick="toggleTech()" id="techBtn">▸ Show technical details</button>
+
+    <!-- everything numeric lives here, hidden by default -->
+    <div class="tech-view" id="techView">
+      <div class="score" id="score"></div>
+      <div class="meta-row" id="metaRow"></div>
+
+      <h2>Why the shield decided this — signal by signal</h2>
+      <ul class="signals" id="signals"></ul>
+      <div class="total-row" id="totalRow" style="display:none;">
+        <span>Total risk score</span><span id="totalScore"></span>
+      </div>
+
+      <button class="privacy-toggle" onclick="togglePrivacy()" id="privBtn">
+        🔒 What data left this phone?
+      </button>
+      <div class="privacy-panel" id="privacyPanel"></div>
+    </div>
 
     <div class="actions">
       <button class="btn-confirm" onclick="decide('CONFIRMED')">Confirm payment</button>
@@ -253,6 +276,13 @@
       return "";
     }
 
+    // fallback plain-language text if the API doesn't send a display block
+    const FALLBACK_DISPLAY = {
+      APPROVE: { label: "Looks safe", plain: "Nothing unusual about this payment.", action_hint: "You can proceed normally." },
+      WARN:    { label: "Unusual — please check", plain: "This payment is a little unusual for you.", action_hint: "Proceed only if you're sure." },
+      BLOCK:   { label: "High risk — confirm to proceed", plain: "This payment strongly matches scam patterns. We are not blocking it — please confirm you really want to send this.", action_hint: "If someone is guiding you on a call, hang up and verify first." }
+    };
+
     async function assess() {
       const tx = buildTx();
       tx.transcript = CALLS[callSelect.value];
@@ -266,18 +296,25 @@
       const data = await res.json();
       lastResult = data;
 
-      const badge = document.getElementById("badge");
-      badge.textContent = data.decision;
-      badge.className = "badge " + data.decision;
+      // --- plain-language verdict (always visible) ---
+      const disp = data.display && data.display.label ? data.display : FALLBACK_DISPLAY[data.decision] || FALLBACK_DISPLAY.WARN;
+      const verdict = document.getElementById("verdict");
+      verdict.className = "verdict v-" + data.decision;
+      document.getElementById("verdictTitle").textContent = disp.label;
+      document.getElementById("verdictPlain").textContent = disp.plain;
+      const hintEl = document.getElementById("verdictHint");
+      hintEl.textContent = disp.action_hint || "";
+      hintEl.style.display = disp.action_hint ? "block" : "none";
 
+      // --- technical score line ---
       let scoreLine = "Risk score: " + data.score + " / 100";
       if (data.thresholds) {
         scoreLine += "   (warn at " + data.thresholds.warn_at +
-                     ", block at " + data.thresholds.block_at + ")";
+                     ", high risk at " + data.thresholds.block_at + ")";
       }
       document.getElementById("score").textContent = scoreLine;
 
-      // --- meta chips: confidence, latency, voice split ---
+      // --- meta chips ---
       const meta = document.getElementById("metaRow");
       meta.innerHTML = "";
       if (data.confidence) {
@@ -300,7 +337,7 @@
         meta.appendChild(s);
       }
 
-      // --- per-signal attribution, with graceful fallback ---
+      // --- per-signal attribution ---
       const ul = document.getElementById("signals");
       ul.innerHTML = "";
       const totalRow = document.getElementById("totalRow");
@@ -324,7 +361,6 @@
         document.getElementById("totalScore").textContent = totalTxt;
         totalRow.style.display = "flex";
       } else if (Array.isArray(data.reasons) && data.reasons.length > 0) {
-        // fallback: older API shape without per-signal points
         data.reasons.forEach(r => {
           const li = document.createElement("li");
           li.className = "signal" + (r.indexOf("Call red flag") === 0 ? " voice" : "");
@@ -341,11 +377,22 @@
         totalRow.style.display = "none";
       }
 
-      // --- privacy manifest ---
       renderPrivacy(data.privacy);
+
+      // reset technical view to collapsed each run
+      document.getElementById("techView").style.display = "none";
+      document.getElementById("techBtn").textContent = "▸ Show technical details";
 
       document.getElementById("resultCard").style.display = "block";
       document.getElementById("logged").style.display = "none";
+    }
+
+    function toggleTech() {
+      const view = document.getElementById("techView");
+      const btn = document.getElementById("techBtn");
+      const open = view.style.display === "block";
+      view.style.display = open ? "none" : "block";
+      btn.textContent = open ? "▸ Show technical details" : "▾ Hide technical details";
     }
 
     function renderPrivacy(priv) {

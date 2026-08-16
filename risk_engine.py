@@ -58,13 +58,49 @@ RULES = {
 }
 
 # ---------------------------------------------------------------------------
+# USER-FACING LABELS
+# Internal decision codes stay APPROVE / WARN / BLOCK everywhere (metrics,
+# CSV, scoring) so nothing downstream breaks. These are ONLY for display.
+# The top state is deliberately NOT called "blocked": the problem statement
+# requires supporting user confirmation WITHOUT blocking legitimate urgent
+# payments, and the user can always proceed. It's a hard warning, not a wall.
+# ---------------------------------------------------------------------------
+DECISION_DISPLAY = {
+    "APPROVE": {
+        "label": "Looks safe",
+        "plain": "Nothing unusual about this payment. Safe to continue.",
+        "action_hint": "You can proceed normally.",
+    },
+    "WARN": {
+        "label": "Unusual — please check",
+        "plain": "This payment is a little unusual for you. Take a moment to make "
+                 "sure you meant to send it.",
+        "action_hint": "Proceed only if you're sure. Cancel if anything feels off.",
+    },
+    "BLOCK": {
+        "label": "High risk — confirm to proceed",
+        "plain": "This payment strongly matches patterns seen in scams. We are NOT "
+                 "blocking it — but please stop and confirm you really want to send "
+                 "this, especially if someone is pressuring or guiding you right now.",
+        "action_hint": "If anyone is on a call telling you to pay, hang up and verify "
+                       "first. You can still proceed if you're certain.",
+    },
+}
+
+
+def decision_display(decision):
+    """Plain-language wrapper for a decision code, for the end-user view."""
+    return DECISION_DISPLAY.get(decision, DECISION_DISPLAY["WARN"])
+
+
+# ---------------------------------------------------------------------------
 # THRESHOLDS
 # Tuned on a 600-transaction set to hold false-positive rate under 1%
 # while keeping recall above 90%. Lowering BLOCK_AT to 50 raised recall
 # slightly but roughly tripled false alarms - not worth it for payments.
 # ---------------------------------------------------------------------------
 WARN_AT = 30     # 30-59 points -> warn the user, let them confirm
-BLOCK_AT = 60    # 60+ points   -> block and ask for review
+BLOCK_AT = 60    # 60+ points   -> highest warning, user still confirms to proceed
 
 # How close to a threshold counts as "borderline" (flagged for bank review).
 BORDERLINE_MARGIN = 8
@@ -293,6 +329,7 @@ def assess_transaction(tx, profile):
         "raw_score": raw_score,
         "capped": raw_score > 100,
         "confidence": confidence,
+        "display": decision_display(decision),
         "thresholds": {"warn_at": WARN_AT, "block_at": BLOCK_AT},
         "privacy": privacy_manifest(tx),
         "latency_ms": latency_ms,
@@ -349,5 +386,6 @@ def merge_external_signals(assessment, extra_signals):
         "score": score,
         "decision": decision,
         "confidence": rate_confidence(signals, score),
+        "display": decision_display(decision),
     })
     return merged
