@@ -35,10 +35,15 @@
     .btn-pay:hover { background: #2563eb; }
     .result { display: none; }
 
-    /* plain-language verdict banner */
-    .verdict {
-      border-radius: 12px; padding: 16px 18px; margin-bottom: 14px;
+    /* inline error notice, replaces the old silent-failure path */
+    .error-box {
+      display: none; background: #3a0a0a; border: 1px solid #dc2626;
+      border-radius: 10px; padding: 14px 16px; margin-bottom: 16px;
+      font-size: 13px; color: #fca5a5; line-height: 1.5;
     }
+    .error-box b { color: #f87171; }
+
+    .verdict { border-radius: 12px; padding: 16px 18px; margin-bottom: 14px; }
     .verdict-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
     .verdict-plain { font-size: 13px; line-height: 1.5; }
     .verdict-hint { font-size: 12px; margin-top: 8px; opacity: .9; font-style: italic; }
@@ -155,14 +160,15 @@
 
     <div id="customFields">
       <label>Amount (₹)</label>
-      <input type="number" id="cAmount" value="15000" min="1" />
+      <input type="number" id="cAmount" value="15000" min="1" max="10000000" />
+      <div class="hint">Between ₹1 and ₹1,00,00,000.</div>
 
       <label>Payee</label>
-      <input type="text" id="cPayee" value="unknown_5521" />
+      <input type="text" id="cPayee" value="unknown_5521" maxlength="200" />
       <div class="hint">Known payees for U001 include <b>merchant_grocery</b>. Anything else counts as new.</div>
 
       <label>City</label>
-      <input type="text" id="cCity" value="Ranchi" />
+      <input type="text" id="cCity" value="Ranchi" maxlength="100" />
 
       <label>Device</label>
       <select id="cDevice">
@@ -191,11 +197,12 @@
     </select>
     <div class="transcript-box" id="transcriptBox">No call transcript.</div>
 
+    <div class="error-box" id="errorBox"></div>
+
     <button class="btn-pay" onclick="assess()">Check payment</button>
   </div>
 
   <div class="card result" id="resultCard">
-    <!-- plain-language verdict, always visible -->
     <div class="verdict" id="verdict">
       <div class="verdict-title" id="verdictTitle"></div>
       <div class="verdict-plain" id="verdictPlain"></div>
@@ -204,7 +211,6 @@
 
     <button class="details-toggle" onclick="toggleTech()" id="techBtn">▸ Show technical details</button>
 
-    <!-- everything numeric lives here, hidden by default -->
     <div class="tech-view" id="techView">
       <div class="score" id="score"></div>
       <div class="meta-row" id="metaRow"></div>
@@ -251,6 +257,23 @@
     function toggleCustom() {
       const isCustom = document.getElementById("scenario").value === "custom";
       document.getElementById("customFields").style.display = isCustom ? "block" : "none";
+      hideError();
+    }
+
+    function showError(message) {
+      const box = document.getElementById("errorBox");
+      box.innerHTML = "";
+      const b = document.createElement("b");
+      b.textContent = "Couldn't check this payment. ";
+      box.appendChild(b);
+      box.appendChild(document.createTextNode(message));
+      box.style.display = "block";
+      // hide any stale result so a previous verdict isn't mistaken for this one
+      document.getElementById("resultCard").style.display = "none";
+    }
+
+    function hideError() {
+      document.getElementById("errorBox").style.display = "none";
     }
 
     function buildTx() {
@@ -276,30 +299,75 @@
       return "";
     }
 
-    // fallback plain-language text if the API doesn't send a display block
     const FALLBACK_DISPLAY = {
       APPROVE: { label: "Looks safe", plain: "Nothing unusual about this payment.", action_hint: "You can proceed normally." },
       WARN:    { label: "Unusual — please check", plain: "This payment is a little unusual for you.", action_hint: "Proceed only if you're sure." },
       BLOCK:   { label: "High risk — confirm to proceed", plain: "This payment strongly matches scam patterns. We are not blocking it — please confirm you really want to send this.", action_hint: "If someone is guiding you on a call, hang up and verify first." }
     };
 
+    // Turns a server validation error into something a person can act on.
+    function describeError(status, body) {
+      if (status === 422) {
+        const detail = body && body.detail;
+        if (Array.isArray(detail) && detail.length) {
+          const field = (detail[0].loc || []).slice(-1)[0] || "a field";
+          return `Check the "${field}" value — it's outside the allowed range.`;
+        }
+        return "One of the values entered isn't valid. Check the amount and payee.";
+      }
+      if (status === 429) return "Too many requests just now. Wait a moment and try again.";
+      if (status >= 500)  return "The risk service had a problem. Try again in a moment.";
+      if (body && typeof body.detail === "string") return body.detail;
+      return `The server returned an error (${status}).`;
+    }
+
     async function assess() {
+      hideError();
       const tx = buildTx();
       tx.transcript = CALLS[callSelect.value];
       lastTx = tx;
 
-      const res = await fetch("/assess", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(tx)
-      });
-      const data = await res.json();
+      let res;
+      try {
+        res = await fetch("/assess", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(tx)
+        });
+      } catch (networkError) {
+        showError("Couldn't reach the risk service. Check that the server is running.");
+        return;
+      }
+
+      // Anything other than a success is reported plainly instead of being
+      // parsed as a verdict - otherwise an error body renders as a bogus
+      // "Unusual" result with no signals behind it.
+      if (!res.ok) {
+        let body = {};
+        try { body = await res.json(); } catch (e) { /* empty or non-JSON body */ }
+        showError(describeError(res.status, body));
+        return;
+      }
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        showError("The risk service sent a response we couldn't read.");
+        return;
+      }
+
+      if (!data || !data.decision) {
+        showError("The risk service didn't return a decision.");
+        return;
+      }
+
       lastResult = data;
 
       // --- plain-language verdict (always visible) ---
       const disp = data.display && data.display.label ? data.display : FALLBACK_DISPLAY[data.decision] || FALLBACK_DISPLAY.WARN;
       const verdict = document.getElementById("verdict");
-      verdict.className = "verdict v-" + data.decision;
+      verdict.className = "verdict v-" + String(data.decision).replace(/[^A-Z]/g, "");
       document.getElementById("verdictTitle").textContent = disp.label;
       document.getElementById("verdictPlain").textContent = disp.plain;
       const hintEl = document.getElementById("verdictHint");
@@ -319,7 +387,7 @@
       meta.innerHTML = "";
       if (data.confidence) {
         const c = document.createElement("span");
-        c.className = "chip " + data.confidence.level;
+        c.className = "chip " + String(data.confidence.level || "").replace(/[^A-Za-z]/g, "");
         c.textContent = "Confidence: " + data.confidence.level + " — " + data.confidence.note;
         meta.appendChild(c);
       }
@@ -379,7 +447,6 @@
 
       renderPrivacy(data.privacy);
 
-      // reset technical view to collapsed each run
       document.getElementById("techView").style.display = "none";
       document.getElementById("techBtn").textContent = "▸ Show technical details";
 
@@ -449,21 +516,25 @@
 
     async function decide(action) {
       if (!lastTx || !lastResult) return;
-      await fetch("/decision", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: lastTx.user_id,
-          amount: lastTx.amount,
-          payee: lastTx.payee,
-          decision: lastResult.decision,
-          score: lastResult.score,
-          user_action: action,
-          confidence: (lastResult.confidence && lastResult.confidence.level) || "",
-          signal_count: (lastResult.signals || []).length
-        })
-      });
-      document.getElementById("logged").style.display = "block";
+      try {
+        await fetch("/decision", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: lastTx.user_id,
+            amount: lastTx.amount,
+            payee: lastTx.payee,
+            decision: lastResult.decision,
+            score: lastResult.score,
+            user_action: action,
+            confidence: (lastResult.confidence && lastResult.confidence.level) || "",
+            signal_count: (lastResult.signals || []).length
+          })
+        });
+        document.getElementById("logged").style.display = "block";
+      } catch (e) {
+        showError("Couldn't record that decision in the audit log.");
+      }
     }
   </script>
 </body>
