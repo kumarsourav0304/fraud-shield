@@ -3,222 +3,326 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fraud Shield — Bank Review Console</title>
+  <title>Bank Review Console — Fraud Shield</title>
+  <link rel="stylesheet" href="/styles.css" />
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
-      background: #0f172a; color: #e2e8f0; padding: 32px 24px; min-height: 100vh;
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
     }
-    h1 { font-size: 24px; margin-bottom: 4px; }
-    .subtitle { color: #94a3b8; font-size: 14px; margin-bottom: 24px; max-width: 640px; }
-    .nav a { color: #60a5fa; text-decoration: none; font-size: 13px; }
-    .cards { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
-    .stat {
-      background: #1e293b; border-radius: 12px; padding: 18px 22px; min-width: 140px; flex: 1;
-    }
-    .stat .num { font-size: 30px; font-weight: 700; }
-    .stat .lbl { font-size: 12px; color: #94a3b8; margin-top: 4px; }
-    .n-total { color: #e2e8f0; } .n-block { color: #f87171; }
-    .n-warn { color: #facc15; } .n-over { color: #a855f7; }
-    .n-fraud { color: #f87171; } .n-legit { color: #4ade80; } .n-pending { color: #60a5fa; }
-    .section-label { font-size: 12px; color: #64748b; text-transform: uppercase;
-      letter-spacing: .5px; margin: 4px 0 8px; }
-    .controls { margin-bottom: 14px; }
     .controls button {
-      background: #1e293b; color: #cbd5e1; border: 1px solid #334155; border-radius: 8px;
-      padding: 8px 14px; font-size: 13px; cursor: pointer; margin-right: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: var(--font-sans);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition);
     }
-    .controls button.active { background: #3b82f6; color: white; border-color: #3b82f6; }
-    table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 12px; overflow: hidden; }
-    th, td { text-align: left; padding: 12px 14px; font-size: 13px; border-bottom: 1px solid #334155; vertical-align: middle; }
-    th { background: #16223a; color: #94a3b8; font-weight: 600; }
-    tr:last-child td { border-bottom: none; }
-    .pill { padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-    .BLOCK { background: #3a0a0a; color: #f87171; }
-    .WARN  { background: #3a2e05; color: #facc15; }
-    .APPROVE { background: #052e1b; color: #4ade80; }
-    .CONFIRMED { color: #4ade80; } .CANCELLED { color: #94a3b8; }
-    .flag { color: #a855f7; font-size: 12px; }
-    .empty { color: #64748b; padding: 20px; text-align: center; }
+    .controls button:hover {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      border-color: var(--border-hover);
+    }
+    .controls button.active {
+      background: var(--accent-subtle);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
 
-    .outcome-tag { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
-    .o-PENDING { background: #0b2540; color: #60a5fa; border: 1px solid #1e40af; }
-    .o-CONFIRMED_FRAUD { background: #3a0a0a; color: #f87171; border: 1px solid #7f1d1d; }
-    .o-CONFIRMED_LEGITIMATE { background: #052e1b; color: #4ade80; border: 1px solid #14532d; }
-    .outcome-btns { display: flex; gap: 6px; margin-top: 6px; }
-    .obtn {
-      font-size: 11px; padding: 4px 8px; border-radius: 6px; cursor: pointer;
-      border: 1px solid #334155; background: #0f172a; color: #cbd5e1; font-weight: 600;
+    /* Decision pills */
+    .d-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: var(--radius-pill);
+      font-size: 11.5px;
+      font-weight: 600;
+      border: 1px solid;
     }
-    .obtn.fraud:hover  { border-color: #dc2626; color: #f87171; }
-    .obtn.legit:hover  { border-color: #16a34a; color: #4ade80; }
-    .obtn.clear:hover  { border-color: #475569; color: #94a3b8; }
+    .d-BLOCK { background: var(--danger-bg); color: var(--danger); border-color: var(--danger-border); }
+    .d-WARN  { background: var(--warning-bg); color: var(--warning); border-color: var(--warning-border); }
+    .d-APPROVE { background: var(--success-bg); color: var(--success); border-color: var(--success-border); }
+
+    .action-CONFIRMED { color: var(--success); }
+    .action-CANCELLED { color: var(--text-secondary); }
+
+    .flag-tag {
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .empty-row {
+      color: var(--text-tertiary);
+      text-align: center;
+      padding: 28px;
+    }
+
+    /* Outcome tag */
+    .outcome-tag {
+      display: inline-flex;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: var(--radius-pill);
+      white-space: nowrap;
+      border: 1px solid;
+    }
+    .o-PENDING { background: rgba(96,165,250,0.08); color: #60a5fa; border-color: rgba(96,165,250,0.2); }
+    .o-CONFIRMED_FRAUD { background: var(--danger-bg); color: var(--danger); border-color: var(--danger-border); }
+    .o-CONFIRMED_LEGITIMATE { background: var(--success-bg); color: var(--success); border-color: var(--success-border); }
+
+    .outcome-btns {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .obtn {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: var(--radius-xs);
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-family: var(--font-sans);
+      transition: all var(--transition);
+    }
+    .obtn.fraud:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-bg); }
+    .obtn.legit:hover { border-color: var(--success); color: var(--success); background: var(--success-bg); }
+    .obtn.clear:hover { border-color: var(--border-hover); color: var(--text-primary); }
     .obtn:disabled { opacity: .4; cursor: default; }
-    .help {
-      background: #16223a; border-left: 3px solid #3b82f6; border-radius: 8px;
-      padding: 12px 14px; font-size: 12px; color: #94a3b8; margin-bottom: 20px; line-height: 1.5;
+
+    /* Responsive table */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+    }
+    .table-wrap table {
+      border: none;
+      border-radius: 0;
     }
   </style>
 </head>
 <body>
-  <div class="nav"><a href="/">← Back to payment shield</a></div>
-  <h1>🏦 Bank Review Console</h1>
-  <div class="subtitle">Every shield decision and the user's response — for false-positive review and audit. The shield never hard-blocks a payment; the user can always confirm. Reviewers mark what a flagged payment actually turned out to be, closing the feedback loop.</div>
 
-  <div class="section-label">Decision volume</div>
-  <div class="cards" id="cards"></div>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <span class="sidebar-logo">🛡️</span>
+        <span class="sidebar-title">Fraud Shield</span>
+      </div>
+      <p class="sidebar-subtitle">Explainable real-time UPI fraud detection</p>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/" class="nav-item">
+        <span class="nav-icon">🛡️</span> Payment Shield
+      </a>
+      <a href="/demo.html" class="nav-item">
+        <span class="nav-icon">▶️</span> Live Demo
+      </a>
+      <a href="/stats.html" class="nav-item">
+        <span class="nav-icon">📊</span> Performance
+      </a>
+      <a href="/review.html" class="nav-item active">
+        <span class="nav-icon">🏦</span> Bank Review
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <span class="sidebar-badge">SOA Ideathon 2026 · S40</span>
+    </div>
+  </aside>
 
-  <div class="section-label">Reviewer feedback loop</div>
-  <div class="cards" id="feedbackCards"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-  <div class="help">
-    <b>How review works:</b> the shield flags a payment with a warning; the user may confirm and pay anyway.
-    A reviewer then marks whether it was really fraud or a false alarm. These confirmations are
-    the labelled data a production system would learn from — and let the bank measure the shield's
-    real-world false-positive rate over time.
-  </div>
+  <main class="main-content">
+    <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">☰</button>
 
-  <div class="controls">
-    <button id="btn-all" class="active" onclick="setFilter('all')">All decisions</button>
-    <button id="btn-flagged" onclick="setFilter('flagged')">Flagged only (warnings)</button>
-    <button id="btn-override" onclick="setFilter('override')">Confirmed despite warning</button>
-    <button id="btn-pending" onclick="setFilter('pending')">Awaiting review</button>
-  </div>
+    <div class="content-wrap wide">
+      <div class="page-header">
+        <h1>🏦 Bank Review Console</h1>
+        <p class="page-description">
+          Every shield decision and the user's response — for false-positive review
+          and audit. The shield never hard-blocks a payment; the user can always confirm.
+          Reviewers mark what a flagged payment actually turned out to be, closing the
+          feedback loop.
+        </p>
+      </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Logged at</th><th>User</th><th>Amount</th><th>Payee</th>
-        <th>Shield warning</th><th>Score</th><th>Conf.</th><th>User action</th>
-        <th>Review flag</th><th>Actual outcome</th>
-      </tr>
-    </thead>
-    <tbody id="tbody"></tbody>
-  </table>
+      <div class="section-label">Decision volume</div>
+      <div class="stat-grid" id="cards" style="margin-bottom:24px;"></div>
 
-  <script>
-    let allRows = [];
-    let filter = "all";
+      <div class="section-label">Reviewer feedback loop</div>
+      <div class="stat-grid" id="feedbackCards" style="margin-bottom:24px;"></div>
 
-    // ---------------------------------------------------------------
-    // SECURITY: every value that came from a user (payee, user_id,
-    // amounts, decisions) is escaped before it is placed into innerHTML.
-    // Without this, a payee named  <img src=x onerror=...>  would run
-    // as script inside the reviewer's browser - a stored XSS, seeded
-    // through the payment form and fired in the bank console.
-    // ---------------------------------------------------------------
-    function esc(value) {
-      if (value === null || value === undefined) return "";
-      return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
-    }
+      <div class="info-box" style="margin-bottom:24px;">
+        <b>How review works:</b> the shield flags a payment with a warning; the user may
+        confirm and pay anyway. A reviewer then marks whether it was really fraud or a
+        false alarm. These confirmations are the labelled data a production system would
+        learn from — and let the bank measure the shield's real-world false-positive rate
+        over time.
+      </div>
 
-    // Values used inside HTML attributes or CSS class names are
-    // additionally restricted to a known-safe character set.
-    function safeToken(value) {
-      return String(value || "").replace(/[^A-Za-z0-9_-]/g, "");
-    }
+      <div class="controls">
+        <button id="btn-all" class="active" onclick="setFilter('all')">All decisions</button>
+        <button id="btn-flagged" onclick="setFilter('flagged')">Flagged only</button>
+        <button id="btn-override" onclick="setFilter('override')">Confirmed despite warning</button>
+        <button id="btn-pending" onclick="setFilter('pending')">Awaiting review</button>
+      </div>
 
-    function decisionLabel(code) {
-      if (code === "BLOCK") return "HIGH RISK";
-      if (code === "WARN") return "WARN";
-      if (code === "APPROVE") return "APPROVE";
-      return esc(code);
-    }
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Logged at</th><th>User</th><th>Amount</th><th>Payee</th>
+              <th>Shield</th><th>Score</th><th>Conf.</th><th>User action</th>
+              <th>Flag</th><th>Actual outcome</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
 
-    function formatAmount(value) {
-      const n = Number(value);
-      if (!isFinite(n)) return esc(value);
-      return "₹" + n.toLocaleString("en-IN");
-    }
+<script>
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('open');
+  }
 
-    async function load() {
-      const res = await fetch("/audit");
-      const data = await res.json();
-      allRows = data.rows.map((r, i) => ({ ...r, _index: i }));
+  let allRows = [];
+  let filter = "all";
 
-      const s = data.summary;
-      document.getElementById("cards").innerHTML = `
-        <div class="stat"><div class="num n-total">${esc(s.total)}</div><div class="lbl">Total decisions logged</div></div>
-        <div class="stat"><div class="num n-block">${esc(s.blocked)}</div><div class="lbl">Highest-risk warnings</div></div>
-        <div class="stat"><div class="num n-warn">${esc(s.warned)}</div><div class="lbl">Warned</div></div>
-        <div class="stat"><div class="num n-over">${esc(s.overrides)}</div><div class="lbl">Confirmed despite warning</div></div>
-      `;
-      document.getElementById("feedbackCards").innerHTML = `
-        <div class="stat"><div class="num n-fraud">${esc(s.confirmed_fraud || 0)}</div><div class="lbl">Confirmed fraud</div></div>
-        <div class="stat"><div class="num n-legit">${esc(s.confirmed_legitimate || 0)}</div><div class="lbl">Confirmed legitimate (false alarm)</div></div>
-        <div class="stat"><div class="num n-pending">${esc(s.pending_review || 0)}</div><div class="lbl">Awaiting reviewer decision</div></div>
-      `;
-      render();
-    }
+  // ---------------------------------------------------------------
+  // SECURITY: every value that came from a user (payee, user_id,
+  // amounts, decisions) is escaped before it is placed into innerHTML.
+  // Without this, a payee named  <img src=x onerror=...>  would run
+  // as script inside the reviewer's browser - a stored XSS, seeded
+  // through the payment form and fired in the bank console.
+  // ---------------------------------------------------------------
+  function esc(value) {
+    if (value === null || value === undefined) return "";
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
 
-    function setFilter(f) {
-      filter = f;
-      document.querySelectorAll(".controls button").forEach(b => b.classList.remove("active"));
-      document.getElementById("btn-" + f).classList.add("active");
-      render();
-    }
+  // Values used inside HTML attributes or CSS class names are
+  // additionally restricted to a known-safe character set.
+  function safeToken(value) {
+    return String(value || "").replace(/[^A-Za-z0-9_-]/g, "");
+  }
 
-    async function setOutcome(index, outcome) {
-      await fetch("/outcome", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ row_index: Number(index), outcome: String(outcome) })
-      });
-      load();
-    }
+  function decisionLabel(code) {
+    if (code === "BLOCK") return "HIGH RISK";
+    if (code === "WARN") return "WARN";
+    if (code === "APPROVE") return "APPROVE";
+    return esc(code);
+  }
 
-    function outcomeCell(r) {
-      const current = safeToken(r.outcome || "PENDING") || "PENDING";
-      const tag = `<span class="outcome-tag o-${current}">${esc(current.replace(/_/g, ' '))}</span>`;
-      const flagged = r.shield_decision === "WARN" || r.shield_decision === "BLOCK";
-      if (!flagged) return tag;
-      const idx = Number(r._index);
-      const btns = `
-        <div class="outcome-btns">
-          <button class="obtn fraud" onclick="setOutcome(${idx}, 'CONFIRMED_FRAUD')">Fraud</button>
-          <button class="obtn legit" onclick="setOutcome(${idx}, 'CONFIRMED_LEGITIMATE')">Legit</button>
-          <button class="obtn clear" onclick="setOutcome(${idx}, 'PENDING')">Reset</button>
-        </div>`;
-      return tag + btns;
-    }
+  function formatAmount(value) {
+    const n = Number(value);
+    if (!isFinite(n)) return esc(value);
+    return "₹" + n.toLocaleString("en-IN");
+  }
 
-    function render() {
-      let rows = allRows;
-      if (filter === "flagged")  rows = rows.filter(r => r.shield_decision === "WARN" || r.shield_decision === "BLOCK");
-      if (filter === "override") rows = rows.filter(r => (r.shield_decision === "WARN" || r.shield_decision === "BLOCK") && r.user_action === "CONFIRMED");
-      if (filter === "pending")  rows = rows.filter(r => (r.shield_decision === "WARN" || r.shield_decision === "BLOCK") && (r.outcome || "PENDING") === "PENDING");
+  async function load() {
+    const res = await fetch("/audit");
+    const data = await res.json();
+    allRows = data.rows.map((r, i) => ({ ...r, _index: i }));
 
-      const tbody = document.getElementById("tbody");
-      if (rows.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" class="empty">No matching decisions.</td></tr>`;
-        return;
-      }
-      tbody.innerHTML = rows.map(r => {
-        const override = (r.shield_decision === "WARN" || r.shield_decision === "BLOCK") && r.user_action === "CONFIRMED";
-        const decisionClass = safeToken(r.shield_decision);
-        const actionClass = safeToken(r.user_action);
-        return `<tr>
-          <td>${esc(r.logged_at)}</td>
-          <td>${esc(r.user_id)}</td>
-          <td>${formatAmount(r.amount)}</td>
-          <td>${esc(r.payee)}</td>
-          <td><span class="pill ${decisionClass}">${decisionLabel(r.shield_decision)}</span></td>
-          <td>${esc(r.score)}</td>
-          <td>${esc(r.confidence || '—')}</td>
-          <td class="${actionClass}">${esc(r.user_action)}</td>
-          <td>${override ? '<span class="flag">⚑ review</span>' : ''}</td>
-          <td>${outcomeCell(r)}</td>
-        </tr>`;
-      }).join("");
-    }
+    const s = data.summary;
+    document.getElementById("cards").innerHTML = `
+      <div class="stat-card"><div class="stat-num" style="color:var(--text-primary)">${esc(s.total)}</div><div class="stat-label">Total decisions</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--danger)">${esc(s.blocked)}</div><div class="stat-label">Highest-risk warnings</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--warning)">${esc(s.warned)}</div><div class="stat-label">Warned</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--accent)">${esc(s.overrides)}</div><div class="stat-label">Confirmed despite warning</div></div>
+    `;
+    document.getElementById("feedbackCards").innerHTML = `
+      <div class="stat-card"><div class="stat-num" style="color:var(--danger)">${esc(s.confirmed_fraud || 0)}</div><div class="stat-label">Confirmed fraud</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--success)">${esc(s.confirmed_legitimate || 0)}</div><div class="stat-label">Confirmed legitimate</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:#60a5fa">${esc(s.pending_review || 0)}</div><div class="stat-label">Awaiting review</div></div>
+    `;
+    render();
+  }
 
+  function setFilter(f) {
+    filter = f;
+    document.querySelectorAll(".controls button").forEach(b => b.classList.remove("active"));
+    document.getElementById("btn-" + f).classList.add("active");
+    render();
+  }
+
+  async function setOutcome(index, outcome) {
+    await fetch("/outcome", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ row_index: Number(index), outcome: String(outcome) })
+    });
     load();
-  </script>
+  }
+
+  function outcomeCell(r) {
+    const current = safeToken(r.outcome || "PENDING") || "PENDING";
+    const tag = `<span class="outcome-tag o-${current}">${esc(current.replace(/_/g, ' '))}</span>`;
+    const flagged = r.shield_decision === "WARN" || r.shield_decision === "BLOCK";
+    if (!flagged) return tag;
+    const idx = Number(r._index);
+    const btns = `
+      <div class="outcome-btns">
+        <button class="obtn fraud" onclick="setOutcome(${idx}, 'CONFIRMED_FRAUD')">Fraud</button>
+        <button class="obtn legit" onclick="setOutcome(${idx}, 'CONFIRMED_LEGITIMATE')">Legit</button>
+        <button class="obtn clear" onclick="setOutcome(${idx}, 'PENDING')">Reset</button>
+      </div>`;
+    return tag + btns;
+  }
+
+  function render() {
+    let rows = allRows;
+    if (filter === "flagged")  rows = rows.filter(r => r.shield_decision === "WARN" || r.shield_decision === "BLOCK");
+    if (filter === "override") rows = rows.filter(r => (r.shield_decision === "WARN" || r.shield_decision === "BLOCK") && r.user_action === "CONFIRMED");
+    if (filter === "pending")  rows = rows.filter(r => (r.shield_decision === "WARN" || r.shield_decision === "BLOCK") && (r.outcome || "PENDING") === "PENDING");
+
+    const tbody = document.getElementById("tbody");
+    if (rows.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="10" class="empty-row">No matching decisions.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = rows.map(r => {
+      const override = (r.shield_decision === "WARN" || r.shield_decision === "BLOCK") && r.user_action === "CONFIRMED";
+      const decisionClass = safeToken(r.shield_decision);
+      const actionClass = safeToken(r.user_action);
+      return `<tr>
+        <td>${esc(r.logged_at)}</td>
+        <td>${esc(r.user_id)}</td>
+        <td>${formatAmount(r.amount)}</td>
+        <td>${esc(r.payee)}</td>
+        <td><span class="d-pill d-${decisionClass}">${decisionLabel(r.shield_decision)}</span></td>
+        <td>${esc(r.score)}</td>
+        <td>${esc(r.confidence || '—')}</td>
+        <td class="action-${actionClass}">${esc(r.user_action)}</td>
+        <td>${override ? '<span class="flag-tag">⚑ review</span>' : ''}</td>
+        <td>${outcomeCell(r)}</td>
+      </tr>`;
+    }).join("");
+  }
+
+  load();
+</script>
 </body>
 </html>

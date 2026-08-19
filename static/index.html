@@ -4,890 +4,1205 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Explainable Fraud Shield</title>
+  <link rel="stylesheet" href="/styles.css" />
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
-      background: #0f172a; color: #e2e8f0;
-      min-height: 100vh; display: flex; flex-direction: column;
-      align-items: center; padding: 32px 16px;
-    }
-    h1 { font-size: 26px; margin-bottom: 4px; }
-    .subtitle { color: #94a3b8; margin-bottom: 12px; font-size: 14px; text-align:center; max-width:520px; }
-    .nav-links { margin-bottom: 24px; font-size: 13px; text-align:center; }
-    .nav-links a { color: #60a5fa; text-decoration: none; }
-    .card {
-      background: #1e293b; border-radius: 16px; padding: 24px;
-      width: 100%; max-width: 520px; box-shadow: 0 10px 30px rgba(0,0,0,.4);
-      margin-bottom: 20px;
-    }
-    .card h2 { font-size: 15px; color: #cbd5e1; margin-bottom: 16px; font-weight: 600; }
-    label { display: block; font-size: 12px; color: #94a3b8; margin: 14px 0 4px; }
-    select, input[type=text], input[type=number] {
-      width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #334155;
-      background: #0f172a; color: #e2e8f0; font-size: 14px;
-    }
-    button {
-      width: 100%; padding: 13px; border: none; border-radius: 8px; cursor: pointer;
-      font-size: 15px; font-weight: 600; margin-top: 18px;
-    }
-    .btn-pay { background: #3b82f6; color: white; }
-    .btn-pay:hover { background: #2563eb; }
-    .result { display: none; }
-
     .error-box {
-      display: none; background: #3a0a0a; border: 1px solid #dc2626;
-      border-radius: 10px; padding: 14px 16px; margin-bottom: 16px;
-      font-size: 13px; color: #fca5a5; line-height: 1.5;
+      display: none;
+      background: var(--danger-bg);
+      border: 1px solid var(--danger-border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: var(--danger);
+      line-height: 1.55;
     }
-    .error-box b { color: #f87171; }
+    .error-box b { color: var(--danger); }
 
-    /* ---- audio input ---- */
+    /* ---- Audio input ---- */
     .audio-panel {
-      border: 1px solid #334155; border-radius: 10px; padding: 13px;
-      margin-top: 6px; background: #16223a;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      margin-top: 8px;
+      background: var(--bg-primary);
     }
-    .audio-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .audio-row button { margin-top: 0; width: auto; flex: 1; min-width: 132px;
-      padding: 9px 12px; font-size: 13px; }
-    .btn-mic { background: #7c3aed; color: #fff; }
-    .btn-mic.recording { background: #dc2626; }
-    .btn-file { background: #334155; color: #e2e8f0; }
-    .btn-file:hover { background: #475569; }
+    .audio-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .audio-row button {
+      margin-top: 0;
+      width: auto;
+      flex: 1;
+      min-width: 130px;
+      padding: 9px 14px;
+      font-size: 13px;
+      font-family: var(--font-sans);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .btn-mic {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent) !important;
+    }
+    .btn-mic:hover { background: var(--accent-hover); }
+    .btn-mic.recording { background: var(--danger); border-color: var(--danger) !important; }
+    .btn-file {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+    .btn-file:hover { background: #3D3D3D; border-color: var(--border-hover); }
     #audioFile { display: none; }
-    .asr-status { font-size: 11.5px; color: #64748b; margin-top: 9px; line-height: 1.45; display: none; }
-    .asr-status.busy { color: #60a5fa; display: block; }
-    .asr-status.done { color: #4ade80; display: block; }
-    .asr-status.fail { color: #f87171; display: block; }
-    .asr-badge {
-      display:inline-block; font-size:10.5px; color:#a78bfa; border:1px solid #6d28d9;
-      background:#2e1065; border-radius:999px; padding:2px 8px; margin-bottom:9px;
+
+    .asr-status {
+      font-size: 11.5px;
+      color: var(--text-tertiary);
+      margin-top: 10px;
+      line-height: 1.5;
+      display: none;
     }
-    .segments { margin-top: 9px; display: none; }
-    .seg { font-size: 11.5px; color: #94a3b8; padding: 4px 0;
-      border-bottom: 1px solid #1e293b; display: flex; gap: 9px; }
+    .asr-status.busy { color: var(--accent); display: block; }
+    .asr-status.done { color: var(--success); display: block; }
+    .asr-status.fail { color: var(--danger); display: block; }
+
+    .asr-badge {
+      display: inline-block;
+      font-size: 10.5px;
+      color: var(--accent);
+      border: 1px solid rgba(217,119,87,0.25);
+      background: var(--accent-subtle);
+      border-radius: var(--radius-pill);
+      padding: 2px 10px;
+      margin-bottom: 10px;
+    }
+
+    .segments { margin-top: 10px; display: none; }
+    .seg {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+    }
     .seg:last-child { border-bottom: none; }
-    .seg-time { color: #60a5fa; font-family: ui-monospace, Menlo, monospace;
-      flex-shrink: 0; font-size: 10.5px; padding-top: 1px; }
+    .seg-time {
+      color: var(--accent);
+      font-family: var(--font-mono);
+      flex-shrink: 0;
+      font-size: 10.5px;
+      padding-top: 1px;
+    }
 
-    /* ---- verdict ---- */
-    .verdict { border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; }
-    .verdict-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
-    .verdict-plain { font-size: 13px; line-height: 1.5; }
-    .verdict-hint { font-size: 12px; margin-top: 8px; opacity: .9; font-style: italic; }
-    .v-APPROVE { background: #052e1b; border: 1px solid #16a34a; }
-    .v-APPROVE .verdict-title { color: #4ade80; }
-    .v-WARN { background: #3a2e05; border: 1px solid #ca8a04; }
-    .v-WARN .verdict-title { color: #facc15; }
-    .v-BLOCK { background: #3a0a0a; border: 1px solid #dc2626; }
-    .v-BLOCK .verdict-title { color: #f87171; }
-    .verdict-plain, .verdict-hint { color: #e2e8f0; }
+    /* ---- Verdict ---- */
+    .verdict {
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      margin-bottom: 16px;
+      border: 1px solid;
+      border-left: 4px solid;
+    }
+    .verdict-title {
+      font-family: var(--font-serif);
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .verdict-plain { font-size: 13px; line-height: 1.6; color: var(--text-primary); }
+    .verdict-hint {
+      font-size: 12px;
+      margin-top: 8px;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+    .v-APPROVE {
+      background: var(--success-bg);
+      border-color: var(--success-border);
+      border-left-color: var(--success);
+    }
+    .v-APPROVE .verdict-title { color: var(--success); }
+    .v-WARN {
+      background: var(--warning-bg);
+      border-color: var(--warning-border);
+      border-left-color: var(--warning);
+    }
+    .v-WARN .verdict-title { color: var(--warning); }
+    .v-BLOCK {
+      background: var(--danger-bg);
+      border-color: var(--danger-border);
+      border-left-color: var(--danger);
+    }
+    .v-BLOCK .verdict-title { color: var(--danger); }
 
-    /* ---- FUSION VIEW ---- */
+    /* ---- Fusion view ---- */
     .fusion-title {
-      font-size: 12px; letter-spacing: 1.2px; color: #64748b;
-      text-align: center; margin-bottom: 12px; font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 1.2px;
+      color: var(--text-tertiary);
+      text-align: center;
+      margin-bottom: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
     }
     .lane {
-      background: #0f172a; border: 1px solid #334155;
-      border-radius: 10px; padding: 13px 14px; margin-bottom: 4px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin-bottom: 6px;
     }
-    .lane.voice { border-color: #6d28d9; }
-    .lane.txn { border-color: #1d4ed8; }
+    .lane.voice { border-left: 3px solid var(--accent); }
+    .lane.txn { border-left: 3px solid #5B8FD4; }
     .lane-head {
-      font-size: 12.5px; font-weight: 700; margin-bottom: 10px;
-      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12.5px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-    .lane.voice .lane-head { color: #a78bfa; }
-    .lane.txn .lane-head { color: #60a5fa; }
-    .lane-empty { font-size: 11.5px; color: #64748b; font-style: italic; padding: 2px 0 8px; }
+    .lane.voice .lane-head { color: var(--accent); }
+    .lane.txn .lane-head { color: #5B8FD4; }
+    .lane-empty {
+      font-size: 11.5px;
+      color: var(--text-tertiary);
+      font-style: italic;
+      padding: 2px 0 8px;
+    }
     .frow {
-      display: flex; justify-content: space-between; align-items: baseline;
-      font-size: 12px; padding: 3.5px 0; gap: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 12px;
+      padding: 3.5px 0;
+      gap: 10px;
     }
-    .frow-name { color: #cbd5e1; }
-    .frow-pts { color: #f87171; font-weight: 700; font-family: ui-monospace, Menlo, monospace;
-      font-size: 11.5px; flex-shrink: 0; }
+    .frow-name { color: var(--text-primary); }
+    .frow-pts {
+      color: var(--danger);
+      font-weight: 700;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      flex-shrink: 0;
+    }
     .bar-label {
-      font-size: 10.5px; letter-spacing: .8px; color: #64748b;
-      margin-top: 10px; margin-bottom: 4px; font-weight: 700;
+      font-size: 10.5px;
+      letter-spacing: 0.8px;
+      color: var(--text-tertiary);
+      margin-top: 10px;
+      margin-bottom: 5px;
+      font-weight: 700;
+      text-transform: uppercase;
     }
     .bar-wrap { display: flex; align-items: center; gap: 10px; }
     .bar {
-      flex: 1; height: 13px; border-radius: 999px; background: #1e293b;
-      overflow: hidden; border: 1px solid #334155;
+      flex: 1;
+      height: 10px;
+      border-radius: var(--radius-pill);
+      background: var(--bg-secondary);
+      overflow: hidden;
+      border: 1px solid var(--border);
     }
-    .bar-fill { height: 100%; border-radius: 999px; transition: width .55s ease; }
-    .lane.voice .bar-fill { background: linear-gradient(90deg,#7c3aed,#a78bfa); }
-    .lane.txn .bar-fill { background: linear-gradient(90deg,#1d4ed8,#60a5fa); }
+    .bar-fill {
+      height: 100%;
+      border-radius: var(--radius-pill);
+      transition: width 0.55s ease;
+    }
+    .lane.voice .bar-fill { background: linear-gradient(90deg, var(--accent), #E8A080); }
+    .lane.txn .bar-fill { background: linear-gradient(90deg, #5B8FD4, #8AB4E8); }
     .bar-num {
-      font-size: 12.5px; font-weight: 700; font-family: ui-monospace, Menlo, monospace;
-      color: #e2e8f0; flex-shrink: 0; min-width: 58px; text-align: right;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+      flex-shrink: 0;
+      min-width: 54px;
+      text-align: right;
     }
-    .connector { text-align: center; color: #475569; font-size: 15px; padding: 3px 0; font-weight: 700; }
+    .connector {
+      text-align: center;
+      color: var(--text-tertiary);
+      font-size: 14px;
+      padding: 2px 0;
+      font-weight: 700;
+    }
 
     .fusion-box {
-      background: #16223a; border: 1px solid #475569;
-      border-radius: 10px; padding: 14px; margin-bottom: 4px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      margin-bottom: 6px;
     }
     .fusion-head {
-      font-size: 12.5px; font-weight: 700; color: #cbd5e1;
-      margin-bottom: 10px; text-align: center; letter-spacing: .5px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+      text-align: center;
+      letter-spacing: 0.4px;
     }
     .fmath {
-      display: flex; justify-content: space-between; font-size: 12px;
-      padding: 3.5px 0; color: #94a3b8;
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      padding: 3.5px 0;
+      color: var(--text-secondary);
     }
-    .fmath span:last-child { font-family: ui-monospace, Menlo, monospace; color: #cbd5e1; }
+    .fmath span:last-child { font-family: var(--font-mono); color: var(--text-primary); }
     .fmath.total {
-      border-top: 1px solid #334155; margin-top: 7px; padding-top: 8px;
-      color: #e2e8f0; font-weight: 700;
+      border-top: 1px solid var(--border);
+      margin-top: 8px;
+      padding-top: 9px;
+      color: var(--text-primary);
+      font-weight: 700;
     }
-    .fmath.total span:last-child { color: #f87171; font-size: 14px; }
-    .fnote { font-size: 10.5px; color: #64748b; margin-top: 7px; line-height: 1.5; font-style: italic; }
+    .fmath.total span:last-child { color: var(--danger); font-size: 14px; }
+    .fnote {
+      font-size: 10.5px;
+      color: var(--text-tertiary);
+      margin-top: 8px;
+      line-height: 1.5;
+      font-style: italic;
+    }
 
     .final-band {
-      border-radius: 10px; padding: 13px; text-align: center;
-      font-size: 14px; font-weight: 700; letter-spacing: .5px; margin-top: 4px;
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      margin-top: 6px;
+      border: 1px solid;
     }
-    .fb-APPROVE { background: #052e1b; border: 1px solid #16a34a; color: #4ade80; }
-    .fb-WARN { background: #3a2e05; border: 1px solid #ca8a04; color: #facc15; }
-    .fb-BLOCK { background: #3a0a0a; border: 1px solid #dc2626; color: #f87171; }
-    .final-sub { font-size: 11px; font-weight: 500; opacity: .85; margin-top: 4px; letter-spacing: 0; }
+    .fb-APPROVE { background: var(--success-bg); border-color: var(--success-border); color: var(--success); }
+    .fb-WARN { background: var(--warning-bg); border-color: var(--warning-border); color: var(--warning); }
+    .fb-BLOCK { background: var(--danger-bg); border-color: var(--danger-border); color: var(--danger); }
+    .final-sub {
+      font-size: 11px;
+      font-weight: 500;
+      opacity: .85;
+      margin-top: 4px;
+      letter-spacing: 0;
+    }
 
     .details-toggle {
-      background:none; border:1px solid #334155; color:#94a3b8;
-      font-size:12px; padding:8px; margin-top:16px; margin-bottom:6px; font-weight:500;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-family: var(--font-sans);
+      padding: 9px;
+      margin-top: 16px;
+      margin-bottom: 6px;
+      font-weight: 500;
+      width: 100%;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--transition);
     }
-    .details-toggle:hover { border-color:#475569; color:#cbd5e1; }
-    .tech-view { display:none; }
+    .details-toggle:hover {
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+      background: var(--bg-primary);
+    }
+    .tech-view { display: none; }
 
-    .score { font-size: 13px; color: #94a3b8; margin-bottom: 10px; }
-    .meta-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
-    .chip {
-      font-size: 11px; padding: 4px 10px; border-radius: 999px;
-      border: 1px solid #334155; background:#0f172a; color:#94a3b8;
+    .score {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
     }
-    .chip.High   { border-color:#16a34a; color:#4ade80; }
-    .chip.Medium { border-color:#ca8a04; color:#facc15; }
-    .chip.Low    { border-color:#64748b; color:#94a3b8; }
-    .chip.latency { border-color:#3b82f6; color:#60a5fa; }
-    .chip.asr { border-color:#6d28d9; color:#a78bfa; }
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .chip {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border);
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+    }
+    .chip.High   { border-color: var(--success-border); color: var(--success); }
+    .chip.Medium { border-color: var(--warning-border); color: var(--warning); }
+    .chip.Low    { border-color: var(--border); color: var(--text-secondary); }
+    .chip.latency { border-color: rgba(96,165,250,0.25); color: #60a5fa; }
+    .chip.asr { border-color: rgba(217,119,87,0.25); color: var(--accent); }
 
     .signals { list-style: none; }
     .signal {
-      background: #0f172a; border-left: 3px solid #64748b; padding: 10px 12px;
-      border-radius: 6px; margin-bottom: 8px;
+      background: var(--bg-primary);
+      border-left: 3px solid var(--text-tertiary);
+      padding: 12px 14px;
+      border-radius: var(--radius-xs);
+      margin-bottom: 8px;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--text-tertiary);
     }
-    .signal.voice { border-left-color: #a855f7; }
-    .signal.access { border-left-color: #f97316; }
+    .signal.voice { border-left-color: var(--accent); }
+    .signal.access { border-left-color: var(--warning); }
     .signal-head {
-      display:flex; justify-content:space-between; align-items:center; gap:10px;
-      font-size: 13px; font-weight: 600; color:#e2e8f0; margin-bottom:3px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
     }
     .pts {
-      font-size: 12px; font-weight: 700; color:#f87171;
-      background:#3a0a0a; border:1px solid #7f1d1d;
-      padding: 2px 8px; border-radius: 999px; white-space:nowrap;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--danger);
+      background: var(--danger-bg);
+      border: 1px solid var(--danger-border);
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      white-space: nowrap;
     }
-    .signal-reason { font-size: 12px; color:#94a3b8; line-height:1.45; }
-    .signal-evidence { font-size: 11px; color:#64748b; margin-top:4px; font-style: italic; }
-    .no-signals { font-size:13px; color:#4ade80; background:#052e1b;
-      border-left:3px solid #16a34a; padding:10px 12px; border-radius:6px; }
+    .signal-reason { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+    .signal-evidence {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 5px;
+      font-style: italic;
+    }
+    .no-signals {
+      font-size: 13px;
+      color: var(--success);
+      background: var(--success-bg);
+      border: 1px solid var(--success-border);
+      border-left: 3px solid var(--success);
+      padding: 12px 14px;
+      border-radius: var(--radius-xs);
+    }
 
     .privacy-toggle {
-      background:none; border:1px solid #334155; color:#94a3b8;
-      font-size:12px; padding:9px; margin-top:14px; font-weight:500;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-family: var(--font-sans);
+      padding: 9px;
+      margin-top: 14px;
+      font-weight: 500;
+      width: 100%;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--transition);
     }
-    .privacy-toggle:hover { border-color:#475569; color:#cbd5e1; }
-    .privacy-panel { display:none; margin-top:12px; }
-    .priv-group { margin-bottom:14px; }
-    .priv-title { font-size:12px; font-weight:600; margin-bottom:7px; }
-    .priv-title.out { color:#facc15; }
-    .priv-title.never { color:#4ade80; }
-    .priv-item { background:#0f172a; border-radius:6px; padding:8px 10px;
-      margin-bottom:6px; font-size:12px; }
-    .priv-field { color:#cbd5e1; font-weight:600; }
-    .priv-value { color:#60a5fa; font-family: ui-monospace, Menlo, monospace; font-size:11px; }
-    .priv-note { color:#64748b; font-size:11px; margin-top:2px; }
+    .privacy-toggle:hover {
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+      background: var(--bg-primary);
+    }
+    .privacy-panel { display: none; margin-top: 12px; }
+    .priv-group { margin-bottom: 14px; }
+    .priv-title { font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+    .priv-title.out { color: var(--warning); }
+    .priv-title.never { color: var(--success); }
+    .priv-item {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xs);
+      padding: 8px 12px;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+    .priv-field { color: var(--text-primary); font-weight: 600; }
+    .priv-value {
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+    .priv-note { color: var(--text-tertiary); font-size: 11px; margin-top: 3px; }
     .priv-never {
-      display:inline-block; background:#052e1b; color:#4ade80; border:1px solid #14532d;
-      font-size:11px; padding:4px 9px; border-radius:999px; margin:0 5px 5px 0;
+      display: inline-block;
+      background: var(--success-bg);
+      color: var(--success);
+      border: 1px solid var(--success-border);
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      margin: 0 5px 5px 0;
     }
 
-    .actions { display: flex; gap: 10px; margin-top: 18px; }
-    .actions button { margin-top: 0; }
-    .btn-confirm { background: #16a34a; color: white; }
-    .btn-cancel  { background: #475569; color: white; }
-    .logged { text-align: center; font-size: 13px; color: #4ade80; margin-top: 14px; display: none; }
-    .transcript-box {
-      background:#0f172a; border:1px solid #334155; border-radius:8px;
-      padding:10px 12px; font-size:12px; color:#94a3b8; margin-top:6px;
-      min-height:44px; line-height:1.4; white-space:pre-wrap;
+    .actions { display: flex; gap: 10px; margin-top: 20px; }
+    .actions button {
+      margin-top: 0;
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      transition: all var(--transition);
     }
-    #customFields { display:none; }
-    .toggle-row { display:flex; align-items:center; gap:9px; margin-top:14px; }
-    .toggle-row input { width:auto; }
-    .toggle-row label { margin:0; font-size:12px; color:#cbd5e1; }
-    .hint { font-size:11px; color:#64748b; margin-top:4px; line-height:1.4; }
+    .btn-confirm { background: var(--success); color: #fff; }
+    .btn-confirm:hover { background: #4DA87A; }
+    .btn-cancel { background: var(--bg-elevated); color: var(--text-primary); border: 1px solid var(--border); }
+    .btn-cancel:hover { background: #3D3D3D; }
+    .logged {
+      text-align: center;
+      font-size: 13px;
+      color: var(--success);
+      margin-top: 14px;
+      display: none;
+    }
+
+    .transcript-box {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+      min-height: 44px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    #customFields { display: none; }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .toggle-row input { width: auto; }
+    .toggle-row label {
+      margin: 0;
+      font-size: 12px;
+      color: var(--text-primary);
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 500;
+    }
+    .hint {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 4px;
+      line-height: 1.45;
+    }
+
+    .result { display: none; }
   </style>
 </head>
 <body>
-  <h1>🛡️ Explainable Fraud Shield</h1>
-  <div class="subtitle">Multimodal UPI fraud detection — the payment and the call analysed together, with a plain-language warning and a reason for every point of risk. The user always makes the final call.</div>
-  <div class="nav-links">
-    <a href="/stats.html">📊 Live performance</a>
-    &nbsp;&nbsp;·&nbsp;&nbsp;
-    <a href="/review.html">🏦 Bank review console</a>
-  </div>
 
-  <div class="card">
-    <h2>Simulate a payment</h2>
-
-    <label>Payment scenario</label>
-    <select id="scenario" onchange="toggleCustom()">
-      <option value="safe">U001 — normal grocery payment (₹250)</option>
-      <option value="scam">U001 — ₹49,999 to unknown payee, new device, other city</option>
-      <option value="mild">U001 — ₹2,000 to a new payee, same device &amp; city</option>
-      <option value="custom">✏️ Custom — build your own transaction</option>
-    </select>
-
-    <div id="customFields">
-      <label>Amount (₹)</label>
-      <input type="number" id="cAmount" value="15000" min="1" max="10000000" />
-      <div class="hint">Between ₹1 and ₹1,00,00,000.</div>
-
-      <label>Payee</label>
-      <input type="text" id="cPayee" value="unknown_5521" maxlength="200" />
-      <div class="hint">Known payees for U001 include <b>merchant_grocery</b>. Anything else counts as new.</div>
-
-      <label>City</label>
-      <input type="text" id="cCity" value="Ranchi" maxlength="100" />
-
-      <label>Device</label>
-      <select id="cDevice">
-        <option value="DEV-A1">DEV-A1 — the user's usual device</option>
-        <option value="DEV-NEW-99">DEV-NEW-99 — never seen before</option>
-      </select>
-
-      <label>Time of payment</label>
-      <select id="cTime">
-        <option value="2026-08-15 14:30:00">Afternoon — 14:30</option>
-        <option value="2026-08-15 02:30:00">Late night — 02:30</option>
-      </select>
-
-      <div class="toggle-row">
-        <input type="checkbox" id="cAccess" />
-        <label for="cAccess">A screen-control app is active on the phone</label>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <span class="sidebar-logo">🛡️</span>
+        <span class="sidebar-title">Fraud Shield</span>
       </div>
-      <div class="hint">Simulates a malicious app abusing Accessibility Services to approve payments remotely.</div>
+      <p class="sidebar-subtitle">Explainable real-time UPI fraud detection</p>
     </div>
+    <nav class="sidebar-nav">
+      <a href="/" class="nav-item active">
+        <span class="nav-icon">🛡️</span> Payment Shield
+      </a>
+      <a href="/demo.html" class="nav-item">
+        <span class="nav-icon">▶️</span> Live Demo
+      </a>
+      <a href="/stats.html" class="nav-item">
+        <span class="nav-icon">📊</span> Performance
+      </a>
+      <a href="/review.html" class="nav-item">
+        <span class="nav-icon">🏦</span> Bank Review
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <span class="sidebar-badge">SOA Ideathon 2026 · S40</span>
+    </div>
+  </aside>
 
-    <label>Phone call before this payment</label>
-    <select id="call" onchange="onCallChange()">
-      <option value="none">No call — user paid on their own</option>
-      <option value="scamcall">Scam call — "bank official", OTP, urgent, don't tell anyone</option>
-      <option value="normalcall">Normal call — a friend about lunch</option>
-      <option value="audio">🎙️ Real audio — upload or record a call</option>
-    </select>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-    <div class="audio-panel" id="audioPanel" style="display:none;">
-      <div class="asr-badge" id="asrBadge">Whisper speech-to-text</div>
-      <div class="audio-row">
-        <button class="btn-file" onclick="document.getElementById('audioFile').click()">
-          📁 Choose audio file
+  <main class="main-content">
+    <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">☰</button>
+
+    <div class="content-wrap">
+      <div class="page-header">
+        <h1>🛡️ Explainable Fraud Shield</h1>
+        <p class="page-description">
+          Multimodal UPI fraud detection — the payment and the call analysed together,
+          with a plain-language warning and a reason for every point of risk. The user
+          always makes the final call.
+        </p>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">Simulate a payment</div>
+
+        <label>Payment scenario</label>
+        <select id="scenario" onchange="toggleCustom()">
+          <option value="safe">U001 — normal grocery payment (₹250)</option>
+          <option value="scam">U001 — ₹49,999 to unknown payee, new device, other city</option>
+          <option value="mild">U001 — ₹2,000 to a new payee, same device &amp; city</option>
+          <option value="custom">✏️ Custom — build your own transaction</option>
+        </select>
+
+        <div id="customFields">
+          <label>Amount (₹)</label>
+          <input type="number" id="cAmount" value="15000" min="1" max="10000000" />
+          <div class="hint">Between ₹1 and ₹1,00,00,000.</div>
+
+          <label>Payee</label>
+          <input type="text" id="cPayee" value="unknown_5521" maxlength="200" />
+          <div class="hint">Known payees for U001 include <b>merchant_grocery</b>. Anything else counts as new.</div>
+
+          <label>City</label>
+          <input type="text" id="cCity" value="Ranchi" maxlength="100" />
+
+          <label>Device</label>
+          <select id="cDevice">
+            <option value="DEV-A1">DEV-A1 — the user's usual device</option>
+            <option value="DEV-NEW-99">DEV-NEW-99 — never seen before</option>
+          </select>
+
+          <label>Time of payment</label>
+          <select id="cTime">
+            <option value="2026-08-15 14:30:00">Afternoon — 14:30</option>
+            <option value="2026-08-15 02:30:00">Late night — 02:30</option>
+          </select>
+
+          <div class="toggle-row">
+            <input type="checkbox" id="cAccess" />
+            <label for="cAccess">A screen-control app is active on the phone</label>
+          </div>
+          <div class="hint">Simulates a malicious app abusing Accessibility Services to approve payments remotely.</div>
+        </div>
+
+        <label>Phone call before this payment</label>
+        <select id="call" onchange="onCallChange()">
+          <option value="none">No call — user paid on their own</option>
+          <option value="scamcall">Scam call — "bank official", OTP, urgent, don't tell anyone</option>
+          <option value="normalcall">Normal call — a friend about lunch</option>
+          <option value="audio">🎙️ Real audio — upload or record a call</option>
+        </select>
+
+        <div class="audio-panel" id="audioPanel" style="display:none;">
+          <div class="asr-badge" id="asrBadge">Whisper speech-to-text</div>
+          <div class="audio-row">
+            <button class="btn-file" onclick="document.getElementById('audioFile').click()">
+              📁 Choose audio file
+            </button>
+            <button class="btn-mic" id="micBtn" onclick="toggleRecording()">
+              🎙️ Record call
+            </button>
+          </div>
+          <input type="file" id="audioFile" accept="audio/*" onchange="uploadAudio(this.files[0])" />
+          <div class="asr-status" id="asrStatus"></div>
+          <div class="segments" id="segments"></div>
+        </div>
+
+        <div class="transcript-box" id="transcriptBox">No call transcript.</div>
+
+        <div class="error-box" id="errorBox"></div>
+
+        <button class="btn btn-primary btn-full" onclick="assess()" style="margin-top:18px;">
+          Check payment
         </button>
-        <button class="btn-mic" id="micBtn" onclick="toggleRecording()">
-          🎙️ Record call
-        </button>
       </div>
-      <input type="file" id="audioFile" accept="audio/*" onchange="uploadAudio(this.files[0])" />
-      <div class="asr-status" id="asrStatus"></div>
-      <div class="segments" id="segments"></div>
-    </div>
 
-    <div class="transcript-box" id="transcriptBox">No call transcript.</div>
+      <div class="card result" id="resultCard">
+        <div class="verdict" id="verdict">
+          <div class="verdict-title" id="verdictTitle"></div>
+          <div class="verdict-plain" id="verdictPlain"></div>
+          <div class="verdict-hint" id="verdictHint"></div>
+        </div>
 
-    <div class="error-box" id="errorBox"></div>
+        <!-- ============ MULTIMODAL FUSION VIEW ============ -->
+        <div class="fusion-title">FRAUD ANALYSIS</div>
 
-    <button class="btn-pay" onclick="assess()">Check payment</button>
-  </div>
+        <div class="lane voice" id="laneVoice">
+          <div class="lane-head"><span>📞 VOICE ANALYSIS</span><span id="voiceCount"></span></div>
+          <div id="voiceRows"></div>
+          <div class="bar-label">VOICE RISK</div>
+          <div class="bar-wrap">
+            <div class="bar"><div class="bar-fill" id="voiceBar" style="width:0%"></div></div>
+            <div class="bar-num" id="voiceNum">0/100</div>
+          </div>
+        </div>
 
-  <div class="card result" id="resultCard">
-    <div class="verdict" id="verdict">
-      <div class="verdict-title" id="verdictTitle"></div>
-      <div class="verdict-plain" id="verdictPlain"></div>
-      <div class="verdict-hint" id="verdictHint"></div>
-    </div>
+        <div class="connector">+</div>
 
-    <!-- ============ MULTIMODAL FUSION VIEW ============
-         The two evidence streams are scored independently, then combined.
-         Showing them side by side makes the multimodal claim visible
-         rather than something the user has to take on trust. -->
-    <div class="fusion-title">FRAUD ANALYSIS</div>
+        <div class="lane txn" id="laneTxn">
+          <div class="lane-head"><span>💳 TRANSACTION ANALYSIS</span><span id="txnCount"></span></div>
+          <div id="txnRows"></div>
+          <div class="bar-label">TRANSACTION RISK</div>
+          <div class="bar-wrap">
+            <div class="bar"><div class="bar-fill" id="txnBar" style="width:0%"></div></div>
+            <div class="bar-num" id="txnNum">0/100</div>
+          </div>
+        </div>
 
-    <div class="lane voice" id="laneVoice">
-      <div class="lane-head"><span>📞 VOICE ANALYSIS</span><span id="voiceCount"></span></div>
-      <div id="voiceRows"></div>
-      <div class="bar-label">VOICE RISK</div>
-      <div class="bar-wrap">
-        <div class="bar"><div class="bar-fill" id="voiceBar" style="width:0%"></div></div>
-        <div class="bar-num" id="voiceNum">0/100</div>
+        <div class="connector">↓</div>
+
+        <div class="fusion-box">
+          <div class="fusion-head">🔗 FUSION ENGINE</div>
+          <div class="fmath"><span>Transaction risk</span><span id="fTxn">0</span></div>
+          <div class="fmath"><span>Voice risk (weighted)</span><span id="fVoice">0</span></div>
+          <div class="fmath total"><span>Combined risk</span><span id="fTotal">0 / 100</span></div>
+          <div class="fnote" id="fNote"></div>
+        </div>
+
+        <div class="connector">↓</div>
+
+        <div class="final-band" id="finalBand">
+          <div id="finalText"></div>
+          <div class="final-sub" id="finalSub"></div>
+        </div>
+
+        <button class="details-toggle" onclick="toggleTech()" id="techBtn">▸ Show technical details</button>
+
+        <div class="tech-view" id="techView">
+          <div class="score" id="score"></div>
+          <div class="meta-row" id="metaRow"></div>
+
+          <div class="card-title">Every signal, with its evidence</div>
+          <ul class="signals" id="signals"></ul>
+
+          <button class="privacy-toggle" onclick="togglePrivacy()" id="privBtn">
+            🔒 What data left this phone?
+          </button>
+          <div class="privacy-panel" id="privacyPanel"></div>
+        </div>
+
+        <div class="actions">
+          <button class="btn-confirm" onclick="decide('CONFIRMED')">Confirm payment</button>
+          <button class="btn-cancel" onclick="decide('CANCELLED')">Cancel</button>
+        </div>
+        <div class="logged" id="logged">✓ Decision recorded in audit log</div>
       </div>
     </div>
+  </main>
+</div>
 
-    <div class="connector">+</div>
+<script>
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('open');
+  }
 
-    <div class="lane txn" id="laneTxn">
-      <div class="lane-head"><span>💳 TRANSACTION ANALYSIS</span><span id="txnCount"></span></div>
-      <div id="txnRows"></div>
-      <div class="bar-label">TRANSACTION RISK</div>
-      <div class="bar-wrap">
-        <div class="bar"><div class="bar-fill" id="txnBar" style="width:0%"></div></div>
-        <div class="bar-num" id="txnNum">0/100</div>
-      </div>
-    </div>
+  const SCENARIOS = {
+    safe: { user_id: "U001", amount: 250,   payee: "merchant_grocery", city: "Ranchi",  device: "DEV-A1",     timestamp: "2026-08-15 14:30:00" },
+    scam: { user_id: "U001", amount: 49999, payee: "unknown_9284",     city: "Chennai", device: "DEV-NEW-77", timestamp: "2026-08-15 02:30:00" },
+    mild: { user_id: "U001", amount: 2000,  payee: "new_shop_88",      city: "Ranchi",  device: "DEV-A1",     timestamp: "2026-08-15 14:30:00" }
+  };
 
-    <div class="connector">↓</div>
+  const CALLS = {
+    none: "",
+    scamcall: "Hello, I am calling from your bank. Your account is frozen due to suspicious activity. This is urgent, you must act now. Do not tell anyone about this call. Please share the OTP to verify and make a small refundable payment to unblock your account.",
+    normalcall: "Hey, are we still meeting for lunch tomorrow? I'll book the table for one o'clock. Let me know if that works."
+  };
 
-    <div class="fusion-box">
-      <div class="fusion-head">🔗 FUSION ENGINE</div>
-      <div class="fmath"><span>Transaction risk</span><span id="fTxn">0</span></div>
-      <div class="fmath"><span>Voice risk (weighted)</span><span id="fVoice">0</span></div>
-      <div class="fmath total"><span>Combined risk</span><span id="fTotal">0 / 100</span></div>
-      <div class="fnote" id="fNote"></div>
-    </div>
+  const VOICE_WEIGHT = 0.6;   // must match VOICE_WEIGHT in app.py
 
-    <div class="connector">↓</div>
+  const callSelect = document.getElementById("call");
+  const tbox = document.getElementById("transcriptBox");
 
-    <div class="final-band" id="finalBand">
-      <div id="finalText"></div>
-      <div class="final-sub" id="finalSub"></div>
-    </div>
+  let audioTranscript = "";
+  let asrMeta = null;
 
-    <button class="details-toggle" onclick="toggleTech()" id="techBtn">▸ Show technical details</button>
-
-    <div class="tech-view" id="techView">
-      <div class="score" id="score"></div>
-      <div class="meta-row" id="metaRow"></div>
-
-      <h2>Every signal, with its evidence</h2>
-      <ul class="signals" id="signals"></ul>
-
-      <button class="privacy-toggle" onclick="togglePrivacy()" id="privBtn">
-        🔒 What data left this phone?
-      </button>
-      <div class="privacy-panel" id="privacyPanel"></div>
-    </div>
-
-    <div class="actions">
-      <button class="btn-confirm" onclick="decide('CONFIRMED')">Confirm payment</button>
-      <button class="btn-cancel" onclick="decide('CANCELLED')">Cancel</button>
-    </div>
-    <div class="logged" id="logged">✓ Decision recorded in audit log</div>
-  </div>
-
-  <script>
-    const SCENARIOS = {
-      safe: { user_id: "U001", amount: 250,   payee: "merchant_grocery", city: "Ranchi",  device: "DEV-A1",     timestamp: "2026-08-15 14:30:00" },
-      scam: { user_id: "U001", amount: 49999, payee: "unknown_9284",     city: "Chennai", device: "DEV-NEW-77", timestamp: "2026-08-15 02:30:00" },
-      mild: { user_id: "U001", amount: 2000,  payee: "new_shop_88",      city: "Ranchi",  device: "DEV-A1",     timestamp: "2026-08-15 14:30:00" }
-    };
-
-    const CALLS = {
-      none: "",
-      scamcall: "Hello, I am calling from your bank. Your account is frozen due to suspicious activity. This is urgent, you must act now. Do not tell anyone about this call. Please share the OTP to verify and make a small refundable payment to unblock your account.",
-      normalcall: "Hey, are we still meeting for lunch tomorrow? I'll book the table for one o'clock. Let me know if that works."
-    };
-
-    const VOICE_WEIGHT = 0.6;   // must match VOICE_WEIGHT in app.py
-
-    const callSelect = document.getElementById("call");
-    const tbox = document.getElementById("transcriptBox");
-
-    let audioTranscript = "";
-    let asrMeta = null;
-
-    async function checkCapabilities() {
-      try {
-        const res = await fetch("/capabilities");
-        if (!res.ok) throw new Error("no capabilities");
-        const caps = await res.json();
-        const asr = caps.transcription || {};
-        if (!asr.available) {
-          const opt = callSelect.querySelector('option[value="audio"]');
-          if (opt) opt.remove();
-          return;
-        }
-        document.getElementById("asrBadge").textContent =
-          "Whisper " + (asr.model || "") + " · on-device speech-to-text";
-      } catch (e) {
+  async function checkCapabilities() {
+    try {
+      const res = await fetch("/capabilities");
+      if (!res.ok) throw new Error("no capabilities");
+      const caps = await res.json();
+      const asr = caps.transcription || {};
+      if (!asr.available) {
         const opt = callSelect.querySelector('option[value="audio"]');
         if (opt) opt.remove();
+        return;
       }
+      document.getElementById("asrBadge").textContent =
+        "Whisper " + (asr.model || "") + " · on-device speech-to-text";
+    } catch (e) {
+      const opt = callSelect.querySelector('option[value="audio"]');
+      if (opt) opt.remove();
     }
-    checkCapabilities();
+  }
+  checkCapabilities();
 
-    function onCallChange() {
-      const v = callSelect.value;
-      document.getElementById("audioPanel").style.display = v === "audio" ? "block" : "none";
-      if (v === "audio") {
-        tbox.textContent = audioTranscript || "No transcript yet — upload or record a call.";
-      } else {
-        tbox.textContent = CALLS[v] ? CALLS[v] : "No call transcript.";
-      }
-      hideError();
+  function onCallChange() {
+    const v = callSelect.value;
+    document.getElementById("audioPanel").style.display = v === "audio" ? "block" : "none";
+    if (v === "audio") {
+      tbox.textContent = audioTranscript || "No transcript yet — upload or record a call.";
+    } else {
+      tbox.textContent = CALLS[v] ? CALLS[v] : "No call transcript.";
     }
+    hideError();
+  }
 
-    function currentTranscript() {
-      return callSelect.value === "audio" ? audioTranscript : (CALLS[callSelect.value] || "");
-    }
+  function currentTranscript() {
+    return callSelect.value === "audio" ? audioTranscript : (CALLS[callSelect.value] || "");
+  }
 
-    function setAsrStatus(text, kind) {
-      const el = document.getElementById("asrStatus");
-      el.textContent = text;
-      el.className = "asr-status " + (kind || "");
-    }
+  function setAsrStatus(text, kind) {
+    const el = document.getElementById("asrStatus");
+    el.textContent = text;
+    el.className = "asr-status " + (kind || "");
+  }
 
-    function renderSegments(segments) {
-      const box = document.getElementById("segments");
-      box.innerHTML = "";
-      if (!segments || !segments.length) { box.style.display = "none"; return; }
-      segments.forEach(s => {
-        const row = document.createElement("div");
-        row.className = "seg";
-        const t = document.createElement("span");
-        t.className = "seg-time";
-        t.textContent = s.start.toFixed(1) + "s";
-        const txt = document.createElement("span");
-        txt.textContent = s.text;
-        row.appendChild(t); row.appendChild(txt);
-        box.appendChild(row);
-      });
-      box.style.display = "block";
-    }
+  function renderSegments(segments) {
+    const box = document.getElementById("segments");
+    box.innerHTML = "";
+    if (!segments || !segments.length) { box.style.display = "none"; return; }
+    segments.forEach(s => {
+      const row = document.createElement("div");
+      row.className = "seg";
+      const t = document.createElement("span");
+      t.className = "seg-time";
+      t.textContent = s.start.toFixed(1) + "s";
+      const txt = document.createElement("span");
+      txt.textContent = s.text;
+      row.appendChild(t); row.appendChild(txt);
+      box.appendChild(row);
+    });
+    box.style.display = "block";
+  }
 
-    async function uploadAudio(file) {
-      if (!file) return;
-      hideError();
-      audioTranscript = "";
-      asrMeta = null;
-      renderSegments(null);
-      setAsrStatus("Transcribing " + file.name + " …", "busy");
-      tbox.textContent = "Transcribing…";
+  async function uploadAudio(file) {
+    if (!file) return;
+    hideError();
+    audioTranscript = "";
+    asrMeta = null;
+    renderSegments(null);
+    setAsrStatus("Transcribing " + file.name + " …", "busy");
+    tbox.textContent = "Transcribing…";
 
-      const form = new FormData();
-      form.append("audio", file, file.name || "recording.webm");
+    const form = new FormData();
+    form.append("audio", file, file.name || "recording.webm");
 
-      try {
-        const res = await fetch("/transcribe", { method: "POST", body: form });
-        const data = await res.json();
+    try {
+      const res = await fetch("/transcribe", { method: "POST", body: form });
+      const data = await res.json();
 
-        if (!res.ok || !data.ok) {
-          setAsrStatus(data.error || "Transcription failed.", "fail");
-          tbox.textContent = "No call transcript.";
-          return;
-        }
-
-        audioTranscript = data.transcript;
-        asrMeta = data;
-        tbox.textContent = data.transcript;
-        renderSegments(data.segments);
-        setAsrStatus(
-          "Transcribed " + data.audio_seconds + "s of audio in " +
-          data.transcribe_ms + " ms · language " + (data.language || "?") +
-          " (" + Math.round((data.language_confidence || 0) * 100) + "% confident)",
-          "done"
-        );
-      } catch (e) {
-        setAsrStatus("Could not reach the transcription service.", "fail");
+      if (!res.ok || !data.ok) {
+        setAsrStatus(data.error || "Transcription failed.", "fail");
         tbox.textContent = "No call transcript.";
-      }
-    }
-
-    let mediaRecorder = null;
-    let chunks = [];
-
-    async function toggleRecording() {
-      const btn = document.getElementById("micBtn");
-
-      if (mediaRecorder && mediaRecorder.state === "recording") {
-        mediaRecorder.stop();
         return;
       }
 
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setAsrStatus("This browser can't record audio. Use the file option instead.", "fail");
-        return;
-      }
+      audioTranscript = data.transcript;
+      asrMeta = data;
+      tbox.textContent = data.transcript;
+      renderSegments(data.segments);
+      setAsrStatus(
+        "Transcribed " + data.audio_seconds + "s of audio in " +
+        data.transcribe_ms + " ms · language " + (data.language || "?") +
+        " (" + Math.round((data.language_confidence || 0) * 100) + "% confident)",
+        "done"
+      );
+    } catch (e) {
+      setAsrStatus("Could not reach the transcription service.", "fail");
+      tbox.textContent = "No call transcript.";
+    }
+  }
 
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        chunks = [];
-        mediaRecorder = new MediaRecorder(stream);
-        mediaRecorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
-        mediaRecorder.onstop = () => {
-          stream.getTracks().forEach(t => t.stop());
-          btn.textContent = "🎙️ Record call";
-          btn.classList.remove("recording");
-          const blob = new Blob(chunks, { type: mediaRecorder.mimeType || "audio/webm" });
-          uploadAudio(new File([blob], "recording.webm", { type: blob.type }));
-        };
-        mediaRecorder.start();
-        btn.textContent = "⏹ Stop recording";
-        btn.classList.add("recording");
-        setAsrStatus("Recording… speak the call, then press stop.", "busy");
-      } catch (e) {
-        setAsrStatus("Microphone permission denied. Use the file option instead.", "fail");
-      }
+  let mediaRecorder = null;
+  let chunks = [];
+
+  async function toggleRecording() {
+    const btn = document.getElementById("micBtn");
+
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+      mediaRecorder.stop();
+      return;
     }
 
-    function toggleCustom() {
-      const isCustom = document.getElementById("scenario").value === "custom";
-      document.getElementById("customFields").style.display = isCustom ? "block" : "none";
-      hideError();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setAsrStatus("This browser can't record audio. Use the file option instead.", "fail");
+      return;
     }
 
-    function showError(message) {
-      const box = document.getElementById("errorBox");
-      box.innerHTML = "";
-      const b = document.createElement("b");
-      b.textContent = "Couldn't check this payment. ";
-      box.appendChild(b);
-      box.appendChild(document.createTextNode(message));
-      box.style.display = "block";
-      document.getElementById("resultCard").style.display = "none";
-    }
-
-    function hideError() {
-      document.getElementById("errorBox").style.display = "none";
-    }
-
-    function buildTx() {
-      const choice = document.getElementById("scenario").value;
-      if (choice !== "custom") return { ...SCENARIOS[choice] };
-      return {
-        user_id: "U001",
-        amount: Number(document.getElementById("cAmount").value) || 0,
-        payee: document.getElementById("cPayee").value.trim() || "unknown_payee",
-        city: document.getElementById("cCity").value.trim() || "Ranchi",
-        device: document.getElementById("cDevice").value,
-        timestamp: document.getElementById("cTime").value,
-        accessibility_service_active: document.getElementById("cAccess").checked
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      chunks = [];
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+      mediaRecorder.onstop = () => {
+        stream.getTracks().forEach(t => t.stop());
+        btn.textContent = "🎙️ Record call";
+        btn.classList.remove("recording");
+        const blob = new Blob(chunks, { type: mediaRecorder.mimeType || "audio/webm" });
+        uploadAudio(new File([blob], "recording.webm", { type: blob.type }));
       };
+      mediaRecorder.start();
+      btn.textContent = "⏹ Stop recording";
+      btn.classList.add("recording");
+      setAsrStatus("Recording… speak the call, then press stop.", "busy");
+    } catch (e) {
+      setAsrStatus("Microphone permission denied. Use the file option instead.", "fail");
     }
+  }
 
-    let lastTx = null, lastResult = null;
+  function toggleCustom() {
+    const isCustom = document.getElementById("scenario").value === "custom";
+    document.getElementById("customFields").style.display = isCustom ? "block" : "none";
+    hideError();
+  }
 
-    function signalClass(code) {
-      if (!code) return "";
-      if (code.indexOf("voice") === 0 || code.indexOf("call") === 0) return " voice";
-      if (code.indexOf("access") === 0) return " access";
-      return "";
-    }
+  function showError(message) {
+    const box = document.getElementById("errorBox");
+    box.innerHTML = "";
+    const b = document.createElement("b");
+    b.textContent = "Couldn't check this payment. ";
+    box.appendChild(b);
+    box.appendChild(document.createTextNode(message));
+    box.style.display = "block";
+    document.getElementById("resultCard").style.display = "none";
+  }
 
-    function isVoiceSignal(s) {
-      return String(s.code || "").indexOf("voice") === 0;
-    }
+  function hideError() {
+    document.getElementById("errorBox").style.display = "none";
+  }
 
-    const FALLBACK_DISPLAY = {
-      APPROVE: { label: "Looks safe", plain: "Nothing unusual about this payment.", action_hint: "You can proceed normally." },
-      WARN:    { label: "Unusual — please check", plain: "This payment is a little unusual for you.", action_hint: "Proceed only if you're sure." },
-      BLOCK:   { label: "High risk — confirm to proceed", plain: "This payment strongly matches scam patterns. We are not blocking it — please confirm you really want to send this.", action_hint: "If someone is guiding you on a call, hang up and verify first." }
+  function buildTx() {
+    const choice = document.getElementById("scenario").value;
+    if (choice !== "custom") return { ...SCENARIOS[choice] };
+    return {
+      user_id: "U001",
+      amount: Number(document.getElementById("cAmount").value) || 0,
+      payee: document.getElementById("cPayee").value.trim() || "unknown_payee",
+      city: document.getElementById("cCity").value.trim() || "Ranchi",
+      device: document.getElementById("cDevice").value,
+      timestamp: document.getElementById("cTime").value,
+      accessibility_service_active: document.getElementById("cAccess").checked
     };
+  }
 
-    // The final band never says "blocked": the system escalates friction,
-    // it does not stop a payment the user insists on making.
-    const FINAL_BAND = {
-      APPROVE: { text: "🟢 LOW FRAUD RISK", sub: "Nothing unusual — safe to continue" },
-      WARN:    { text: "🟡 MODERATE FRAUD RISK", sub: "Check before continuing — you decide" },
-      BLOCK:   { text: "🔴 HIGH FRAUD RISK", sub: "Confirm to proceed — payment is not blocked" }
-    };
+  let lastTx = null, lastResult = null;
 
-    function describeError(status, body) {
-      if (status === 422) {
-        const detail = body && body.detail;
-        if (Array.isArray(detail) && detail.length) {
-          const field = (detail[0].loc || []).slice(-1)[0] || "a field";
-          return `Check the "${field}" value — it's outside the allowed range.`;
-        }
-        return "One of the values entered isn't valid. Check the amount and payee.";
+  function signalClass(code) {
+    if (!code) return "";
+    if (code.indexOf("voice") === 0 || code.indexOf("call") === 0) return " voice";
+    if (code.indexOf("access") === 0) return " access";
+    return "";
+  }
+
+  function isVoiceSignal(s) {
+    return String(s.code || "").indexOf("voice") === 0;
+  }
+
+  const FALLBACK_DISPLAY = {
+    APPROVE: { label: "Looks safe", plain: "Nothing unusual about this payment.", action_hint: "You can proceed normally." },
+    WARN:    { label: "Unusual — please check", plain: "This payment is a little unusual for you.", action_hint: "Proceed only if you're sure." },
+    BLOCK:   { label: "High risk — confirm to proceed", plain: "This payment strongly matches scam patterns. We are not blocking it — please confirm you really want to send this.", action_hint: "If someone is guiding you on a call, hang up and verify first." }
+  };
+
+  // The final band never says "blocked": the system escalates friction,
+  // it does not stop a payment the user insists on making.
+  const FINAL_BAND = {
+    APPROVE: { text: "🟢 LOW FRAUD RISK", sub: "Nothing unusual — safe to continue" },
+    WARN:    { text: "🟡 MODERATE FRAUD RISK", sub: "Check before continuing — you decide" },
+    BLOCK:   { text: "🔴 HIGH FRAUD RISK", sub: "Confirm to proceed — payment is not blocked" }
+  };
+
+  function describeError(status, body) {
+    if (status === 422) {
+      const detail = body && body.detail;
+      if (Array.isArray(detail) && detail.length) {
+        const field = (detail[0].loc || []).slice(-1)[0] || "a field";
+        return `Check the "${field}" value — it's outside the allowed range.`;
       }
-      if (status === 429) return "Too many requests just now. Wait a moment and try again.";
-      if (status >= 500)  return "The risk service had a problem. Try again in a moment.";
-      if (body && typeof body.detail === "string") return body.detail;
-      return `The server returned an error (${status}).`;
+      return "One of the values entered isn't valid. Check the amount and payee.";
+    }
+    if (status === 429) return "Too many requests just now. Wait a moment and try again.";
+    if (status >= 500)  return "The risk service had a problem. Try again in a moment.";
+    if (body && typeof body.detail === "string") return body.detail;
+    return `The server returned an error (${status}).`;
+  }
+
+  // ---------------------------------------------------------------
+  // Render one evidence lane (voice or transaction).
+  // Points shown are the ones that actually entered the total, so the
+  // arithmetic in the fusion box below always adds up on screen.
+  // ---------------------------------------------------------------
+  function renderLane(rowsId, countId, barId, numId, signals, rawScore, emptyMsg) {
+    const rows = document.getElementById(rowsId);
+    rows.innerHTML = "";
+
+    if (!signals.length) {
+      const d = document.createElement("div");
+      d.className = "lane-empty";
+      d.textContent = emptyMsg;
+      rows.appendChild(d);
+    } else {
+      signals.forEach(s => {
+        const r = document.createElement("div");
+        r.className = "frow";
+        const n = document.createElement("span");
+        n.className = "frow-name";
+        n.textContent = (s.label || s.code).replace(/^Call red flag — /, "");
+        const p = document.createElement("span");
+        p.className = "frow-pts";
+        p.textContent = "+" + s.points;
+        r.appendChild(n); r.appendChild(p);
+        rows.appendChild(r);
+      });
     }
 
-    // ---------------------------------------------------------------
-    // Render one evidence lane (voice or transaction).
-    // Points shown are the ones that actually entered the total, so the
-    // arithmetic in the fusion box below always adds up on screen.
-    // ---------------------------------------------------------------
-    function renderLane(rowsId, countId, barId, numId, signals, rawScore, emptyMsg) {
-      const rows = document.getElementById(rowsId);
-      rows.innerHTML = "";
+    document.getElementById(countId).textContent =
+      signals.length ? signals.length + (signals.length === 1 ? " signal" : " signals") : "";
 
-      if (!signals.length) {
-        const d = document.createElement("div");
-        d.className = "lane-empty";
-        d.textContent = emptyMsg;
-        rows.appendChild(d);
-      } else {
-        signals.forEach(s => {
-          const r = document.createElement("div");
-          r.className = "frow";
-          const n = document.createElement("span");
-          n.className = "frow-name";
-          n.textContent = (s.label || s.code).replace(/^Call red flag — /, "");
-          const p = document.createElement("span");
-          p.className = "frow-pts";
-          p.textContent = "+" + s.points;
-          r.appendChild(n); r.appendChild(p);
-          rows.appendChild(r);
-        });
-      }
+    const pct = Math.max(0, Math.min(100, rawScore));
+    document.getElementById(barId).style.width = pct + "%";
+    document.getElementById(numId).textContent = Math.round(rawScore) + "/100";
+  }
 
-      document.getElementById(countId).textContent =
-        signals.length ? signals.length + (signals.length === 1 ? " signal" : " signals") : "";
+  function renderFusion(data) {
+    const signals = Array.isArray(data.signals) ? data.signals : [];
+    const voiceSignals = signals.filter(isVoiceSignal);
+    const txnSignals = signals.filter(s => !isVoiceSignal(s));
 
-      const pct = Math.max(0, Math.min(100, rawScore));
-      document.getElementById(barId).style.width = pct + "%";
-      document.getElementById(numId).textContent = Math.round(rawScore) + "/100";
+    const voiceRaw = data.voice_score || 0;      // 0-100 before weighting
+    const txnRaw = data.payment_score || 0;      // 0-100
+
+    renderLane("voiceRows", "voiceCount", "voiceBar", "voiceNum",
+               voiceSignals, voiceRaw,
+               "No call analysed for this payment.");
+
+    renderLane("txnRows", "txnCount", "txnBar", "txnNum",
+               txnSignals, txnRaw,
+               "Nothing unusual in the payment itself.");
+
+    // The weighted voice contribution, exactly as the backend computes it.
+    const weighted = Math.trunc(voiceRaw * VOICE_WEIGHT);
+    const rawTotal = txnRaw + weighted;
+
+    document.getElementById("fTxn").textContent = txnRaw;
+    document.getElementById("fVoice").textContent =
+      weighted + "   (" + voiceRaw + " × " + VOICE_WEIGHT + ")";
+    document.getElementById("fTotal").textContent = data.score + " / 100";
+
+    let note = "The payment leads; a coercive call contributes " +
+               Math.round(VOICE_WEIGHT * 100) + "% of its own score. " +
+               txnRaw + " + " + weighted + " = " + rawTotal;
+    note += (rawTotal > 100) ? ", capped at 100." : ".";
+    document.getElementById("fNote").textContent = note;
+
+    const band = FINAL_BAND[data.decision] || FINAL_BAND.WARN;
+    const bandEl = document.getElementById("finalBand");
+    bandEl.className = "final-band fb-" + String(data.decision).replace(/[^A-Z]/g, "");
+    document.getElementById("finalText").textContent = band.text;
+    document.getElementById("finalSub").textContent = band.sub;
+  }
+
+  async function assess() {
+    hideError();
+    const tx = buildTx();
+    tx.transcript = currentTranscript();
+    lastTx = tx;
+
+    let res;
+    try {
+      res = await fetch("/assess", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(tx)
+      });
+    } catch (networkError) {
+      showError("Couldn't reach the risk service. Check that the server is running.");
+      return;
     }
 
-    function renderFusion(data) {
-      const signals = Array.isArray(data.signals) ? data.signals : [];
-      const voiceSignals = signals.filter(isVoiceSignal);
-      const txnSignals = signals.filter(s => !isVoiceSignal(s));
-
-      const voiceRaw = data.voice_score || 0;      // 0-100 before weighting
-      const txnRaw = data.payment_score || 0;      // 0-100
-
-      renderLane("voiceRows", "voiceCount", "voiceBar", "voiceNum",
-                 voiceSignals, voiceRaw,
-                 "No call analysed for this payment.");
-
-      renderLane("txnRows", "txnCount", "txnBar", "txnNum",
-                 txnSignals, txnRaw,
-                 "Nothing unusual in the payment itself.");
-
-      // The weighted voice contribution, exactly as the backend computes it.
-      const weighted = Math.trunc(voiceRaw * VOICE_WEIGHT);
-      const rawTotal = txnRaw + weighted;
-
-      document.getElementById("fTxn").textContent = txnRaw;
-      document.getElementById("fVoice").textContent =
-        weighted + "   (" + voiceRaw + " × " + VOICE_WEIGHT + ")";
-      document.getElementById("fTotal").textContent = data.score + " / 100";
-
-      let note = "The payment leads; a coercive call contributes " +
-                 Math.round(VOICE_WEIGHT * 100) + "% of its own score. " +
-                 txnRaw + " + " + weighted + " = " + rawTotal;
-      note += (rawTotal > 100) ? ", capped at 100." : ".";
-      document.getElementById("fNote").textContent = note;
-
-      const band = FINAL_BAND[data.decision] || FINAL_BAND.WARN;
-      const bandEl = document.getElementById("finalBand");
-      bandEl.className = "final-band fb-" + String(data.decision).replace(/[^A-Z]/g, "");
-      document.getElementById("finalText").textContent = band.text;
-      document.getElementById("finalSub").textContent = band.sub;
+    if (!res.ok) {
+      let body = {};
+      try { body = await res.json(); } catch (e) { /* non-JSON body */ }
+      showError(describeError(res.status, body));
+      return;
     }
 
-    async function assess() {
-      hideError();
-      const tx = buildTx();
-      tx.transcript = currentTranscript();
-      lastTx = tx;
+    let data;
+    try {
+      data = await res.json();
+    } catch (e) {
+      showError("The risk service sent a response we couldn't read.");
+      return;
+    }
 
-      let res;
-      try {
-        res = await fetch("/assess", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(tx)
-        });
-      } catch (networkError) {
-        showError("Couldn't reach the risk service. Check that the server is running.");
-        return;
-      }
+    if (!data || !data.decision) {
+      showError("The risk service didn't return a decision.");
+      return;
+    }
 
-      if (!res.ok) {
-        let body = {};
-        try { body = await res.json(); } catch (e) { /* non-JSON body */ }
-        showError(describeError(res.status, body));
-        return;
-      }
+    lastResult = data;
 
-      let data;
-      try {
-        data = await res.json();
-      } catch (e) {
-        showError("The risk service sent a response we couldn't read.");
-        return;
-      }
+    const disp = data.display && data.display.label ? data.display : FALLBACK_DISPLAY[data.decision] || FALLBACK_DISPLAY.WARN;
+    const verdict = document.getElementById("verdict");
+    verdict.className = "verdict v-" + String(data.decision).replace(/[^A-Z]/g, "");
+    document.getElementById("verdictTitle").textContent = disp.label;
+    document.getElementById("verdictPlain").textContent = disp.plain;
+    const hintEl = document.getElementById("verdictHint");
+    hintEl.textContent = disp.action_hint || "";
+    hintEl.style.display = disp.action_hint ? "block" : "none";
 
-      if (!data || !data.decision) {
-        showError("The risk service didn't return a decision.");
-        return;
-      }
+    renderFusion(data);
 
-      lastResult = data;
+    let scoreLine = "Risk score: " + data.score + " / 100";
+    if (data.thresholds) {
+      scoreLine += "   (warn at " + data.thresholds.warn_at +
+                   ", high risk at " + data.thresholds.block_at + ")";
+    }
+    document.getElementById("score").textContent = scoreLine;
 
-      const disp = data.display && data.display.label ? data.display : FALLBACK_DISPLAY[data.decision] || FALLBACK_DISPLAY.WARN;
-      const verdict = document.getElementById("verdict");
-      verdict.className = "verdict v-" + String(data.decision).replace(/[^A-Z]/g, "");
-      document.getElementById("verdictTitle").textContent = disp.label;
-      document.getElementById("verdictPlain").textContent = disp.plain;
-      const hintEl = document.getElementById("verdictHint");
-      hintEl.textContent = disp.action_hint || "";
-      hintEl.style.display = disp.action_hint ? "block" : "none";
+    const meta = document.getElementById("metaRow");
+    meta.innerHTML = "";
+    if (data.confidence) {
+      const c = document.createElement("span");
+      c.className = "chip " + String(data.confidence.level || "").replace(/[^A-Za-z]/g, "");
+      c.textContent = "Confidence: " + data.confidence.level + " — " + data.confidence.note;
+      meta.appendChild(c);
+    }
+    if (data.latency_ms !== undefined) {
+      const l = document.createElement("span");
+      l.className = "chip latency";
+      l.textContent = "⚡ Scored in " + data.latency_ms + " ms";
+      meta.appendChild(l);
+    }
+    if (asrMeta && callSelect.value === "audio") {
+      const a = document.createElement("span");
+      a.className = "chip asr";
+      a.textContent = "🎙️ Whisper " + asrMeta.model + " · " +
+                      asrMeta.audio_seconds + "s audio in " + asrMeta.transcribe_ms + " ms";
+      meta.appendChild(a);
+    }
 
-      renderFusion(data);
-
-      let scoreLine = "Risk score: " + data.score + " / 100";
-      if (data.thresholds) {
-        scoreLine += "   (warn at " + data.thresholds.warn_at +
-                     ", high risk at " + data.thresholds.block_at + ")";
-      }
-      document.getElementById("score").textContent = scoreLine;
-
-      const meta = document.getElementById("metaRow");
-      meta.innerHTML = "";
-      if (data.confidence) {
-        const c = document.createElement("span");
-        c.className = "chip " + String(data.confidence.level || "").replace(/[^A-Za-z]/g, "");
-        c.textContent = "Confidence: " + data.confidence.level + " — " + data.confidence.note;
-        meta.appendChild(c);
-      }
-      if (data.latency_ms !== undefined) {
-        const l = document.createElement("span");
-        l.className = "chip latency";
-        l.textContent = "⚡ Scored in " + data.latency_ms + " ms";
-        meta.appendChild(l);
-      }
-      if (asrMeta && callSelect.value === "audio") {
-        const a = document.createElement("span");
-        a.className = "chip asr";
-        a.textContent = "🎙️ Whisper " + asrMeta.model + " · " +
-                        asrMeta.audio_seconds + "s audio in " + asrMeta.transcribe_ms + " ms";
-        meta.appendChild(a);
-      }
-
-      const ul = document.getElementById("signals");
-      ul.innerHTML = "";
-      if (Array.isArray(data.signals) && data.signals.length > 0) {
-        data.signals.forEach(s => {
-          const li = document.createElement("li");
-          li.className = "signal" + signalClass(s.code);
-          li.innerHTML =
-            '<div class="signal-head"><span></span><span class="pts"></span></div>' +
-            '<div class="signal-reason"></div>' +
-            (s.evidence ? '<div class="signal-evidence"></div>' : '');
-          li.querySelector(".signal-head span:first-child").textContent = s.label || s.code;
-          li.querySelector(".pts").textContent = "+" + s.points + " risk";
-          li.querySelector(".signal-reason").textContent = s.reason || "";
-          if (s.evidence) li.querySelector(".signal-evidence").textContent = "Evidence: " + s.evidence;
-          ul.appendChild(li);
-        });
-      } else {
+    const ul = document.getElementById("signals");
+    ul.innerHTML = "";
+    if (Array.isArray(data.signals) && data.signals.length > 0) {
+      data.signals.forEach(s => {
         const li = document.createElement("li");
-        li.className = "no-signals";
-        li.textContent = "No risk signals fired — this matches the user's normal behaviour.";
+        li.className = "signal" + signalClass(s.code);
+        li.innerHTML =
+          '<div class="signal-head"><span></span><span class="pts"></span></div>' +
+          '<div class="signal-reason"></div>' +
+          (s.evidence ? '<div class="signal-evidence"></div>' : '');
+        li.querySelector(".signal-head span:first-child").textContent = s.label || s.code;
+        li.querySelector(".pts").textContent = "+" + s.points + " risk";
+        li.querySelector(".signal-reason").textContent = s.reason || "";
+        if (s.evidence) li.querySelector(".signal-evidence").textContent = "Evidence: " + s.evidence;
         ul.appendChild(li);
-      }
-
-      renderPrivacy(data.privacy);
-
-      document.getElementById("techView").style.display = "none";
-      document.getElementById("techBtn").textContent = "▸ Show technical details";
-
-      document.getElementById("resultCard").style.display = "block";
-      document.getElementById("logged").style.display = "none";
-    }
-
-    function toggleTech() {
-      const view = document.getElementById("techView");
-      const btn = document.getElementById("techBtn");
-      const open = view.style.display === "block";
-      view.style.display = open ? "none" : "block";
-      btn.textContent = open ? "▸ Show technical details" : "▾ Hide technical details";
-    }
-
-    function renderPrivacy(priv) {
-      const panel = document.getElementById("privacyPanel");
-      const btn = document.getElementById("privBtn");
-      panel.innerHTML = "";
-      panel.style.display = "none";
-      btn.textContent = "🔒 What data left this phone?";
-
-      if (!priv) { btn.style.display = "none"; return; }
-      btn.style.display = "block";
-
-      const outGroup = document.createElement("div");
-      outGroup.className = "priv-group";
-      const outTitle = document.createElement("div");
-      outTitle.className = "priv-title out";
-      outTitle.textContent = "↗ Sent to the risk service";
-      outGroup.appendChild(outTitle);
-
-      (priv.transmitted || []).forEach(item => {
-        const d = document.createElement("div");
-        d.className = "priv-item";
-        d.innerHTML = '<span class="priv-field"></span>: <span class="priv-value"></span>' +
-                      '<div class="priv-note"></div>';
-        d.querySelector(".priv-field").textContent = item.field;
-        d.querySelector(".priv-value").textContent = item.value;
-        d.querySelector(".priv-note").textContent = item.note || "";
-        outGroup.appendChild(d);
       });
-      panel.appendChild(outGroup);
+    } else {
+      const li = document.createElement("li");
+      li.className = "no-signals";
+      li.textContent = "No risk signals fired — this matches the user's normal behaviour.";
+      ul.appendChild(li);
+    }
 
-      const neverGroup = document.createElement("div");
-      neverGroup.className = "priv-group";
-      const nTitle = document.createElement("div");
-      nTitle.className = "priv-title never";
-      nTitle.textContent = "✕ Never leaves the device";
-      neverGroup.appendChild(nTitle);
-      (priv.never_transmitted || []).forEach(txt => {
-        const tag = document.createElement("span");
-        tag.className = "priv-never";
-        tag.textContent = txt;
-        neverGroup.appendChild(tag);
+    renderPrivacy(data.privacy);
+
+    document.getElementById("techView").style.display = "none";
+    document.getElementById("techBtn").textContent = "▸ Show technical details";
+
+    document.getElementById("resultCard").style.display = "block";
+    document.getElementById("logged").style.display = "none";
+  }
+
+  function toggleTech() {
+    const view = document.getElementById("techView");
+    const btn = document.getElementById("techBtn");
+    const open = view.style.display === "block";
+    view.style.display = open ? "none" : "block";
+    btn.textContent = open ? "▸ Show technical details" : "▾ Hide technical details";
+  }
+
+  function renderPrivacy(priv) {
+    const panel = document.getElementById("privacyPanel");
+    const btn = document.getElementById("privBtn");
+    panel.innerHTML = "";
+    panel.style.display = "none";
+    btn.textContent = "🔒 What data left this phone?";
+
+    if (!priv) { btn.style.display = "none"; return; }
+    btn.style.display = "block";
+
+    const outGroup = document.createElement("div");
+    outGroup.className = "priv-group";
+    const outTitle = document.createElement("div");
+    outTitle.className = "priv-title out";
+    outTitle.textContent = "↗ Sent to the risk service";
+    outGroup.appendChild(outTitle);
+
+    (priv.transmitted || []).forEach(item => {
+      const d = document.createElement("div");
+      d.className = "priv-item";
+      d.innerHTML = '<span class="priv-field"></span>: <span class="priv-value"></span>' +
+                    '<div class="priv-note"></div>';
+      d.querySelector(".priv-field").textContent = item.field;
+      d.querySelector(".priv-value").textContent = item.value;
+      d.querySelector(".priv-note").textContent = item.note || "";
+      outGroup.appendChild(d);
+    });
+    panel.appendChild(outGroup);
+
+    const neverGroup = document.createElement("div");
+    neverGroup.className = "priv-group";
+    const nTitle = document.createElement("div");
+    nTitle.className = "priv-title never";
+    nTitle.textContent = "✕ Never leaves the device";
+    neverGroup.appendChild(nTitle);
+    (priv.never_transmitted || []).forEach(txt => {
+      const tag = document.createElement("span");
+      tag.className = "priv-never";
+      tag.textContent = txt;
+      neverGroup.appendChild(tag);
+    });
+    panel.appendChild(neverGroup);
+  }
+
+  function togglePrivacy() {
+    const panel = document.getElementById("privacyPanel");
+    const btn = document.getElementById("privBtn");
+    const open = panel.style.display === "block";
+    panel.style.display = open ? "none" : "block";
+    btn.textContent = open ? "🔒 What data left this phone?" : "🔒 Hide data detail";
+  }
+
+  async function decide(action) {
+    if (!lastTx || !lastResult) return;
+    try {
+      await fetch("/decision", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: lastTx.user_id,
+          amount: lastTx.amount,
+          payee: lastTx.payee,
+          decision: lastResult.decision,
+          score: lastResult.score,
+          user_action: action,
+          confidence: (lastResult.confidence && lastResult.confidence.level) || "",
+          signal_count: (lastResult.signals || []).length
+        })
       });
-      panel.appendChild(neverGroup);
+      document.getElementById("logged").style.display = "block";
+    } catch (e) {
+      showError("Couldn't record that decision in the audit log.");
     }
-
-    function togglePrivacy() {
-      const panel = document.getElementById("privacyPanel");
-      const btn = document.getElementById("privBtn");
-      const open = panel.style.display === "block";
-      panel.style.display = open ? "none" : "block";
-      btn.textContent = open ? "🔒 What data left this phone?" : "🔒 Hide data detail";
-    }
-
-    async function decide(action) {
-      if (!lastTx || !lastResult) return;
-      try {
-        await fetch("/decision", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_id: lastTx.user_id,
-            amount: lastTx.amount,
-            payee: lastTx.payee,
-            decision: lastResult.decision,
-            score: lastResult.score,
-            user_action: action,
-            confidence: (lastResult.confidence && lastResult.confidence.level) || "",
-            signal_count: (lastResult.signals || []).length
-          })
-        });
-        document.getElementById("logged").style.display = "block";
-      } catch (e) {
-        showError("Couldn't record that decision in the audit log.");
-      }
-    }
-  </script>
+  }
+</script>
 </body>
 </html>

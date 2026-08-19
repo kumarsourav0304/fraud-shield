@@ -3,320 +3,431 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>UPI Guardian — Live Fraud Demo</title>
+  <title>Live Demo — Fraud Shield</title>
+  <link rel="stylesheet" href="/styles.css" />
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
-      background: #0f172a; color: #e2e8f0; min-height: 100vh;
-      padding: 28px 16px 60px;
+    /* ---- Header badges ---- */
+    .demo-badges {
+      display: flex; gap: 8px; margin: 14px 0 0; flex-wrap: wrap;
     }
-    .wrap { max-width: 920px; margin: 0 auto; }
-
-    header { text-align: center; margin-bottom: 8px; }
-    h1 { font-size: 27px; letter-spacing: -.4px; }
-    .tag { color: #94a3b8; font-size: 13.5px; margin-top: 4px; }
-    .badges { display:flex; justify-content:center; gap:8px; margin:12px 0 6px; flex-wrap:wrap; }
-    .badge {
-      font-size: 11px; padding: 4px 11px; border-radius: 999px; font-weight: 600;
-      border: 1px solid #334155; background: #16223a; color: #94a3b8;
+    .demo-badge {
+      font-size: 11px; padding: 4px 12px; border-radius: var(--radius-pill);
+      font-weight: 600; border: 1px solid var(--border); background: var(--bg-secondary);
+      color: var(--text-secondary);
     }
-    .badge.live { border-color:#16a34a; color:#4ade80; }
-    .badge.demo { border-color:#ca8a04; color:#facc15; }
-    .nav { text-align:center; font-size:13px; margin-bottom: 26px; }
-    .nav a { color:#60a5fa; text-decoration:none; margin: 0 9px; }
+    .demo-badge.live { border-color: var(--success); color: var(--success); }
+    .demo-badge.demo-mode { border-color: var(--warning); color: var(--warning); }
 
-    section { margin-bottom: 34px; }
-    .sec-head { display:flex; align-items:baseline; gap:10px; margin-bottom:5px; flex-wrap:wrap; }
-    h2 { font-size: 19px; }
-    .sec-sub { color:#94a3b8; font-size:13px; line-height:1.55; margin-bottom:15px; max-width: 700px; }
+    /* ---- Section ---- */
+    .demo-section { margin-bottom: 40px; }
+    .demo-section h2 {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+    .demo-section .sec-sub {
+      color: var(--text-secondary);
+      font-size: 13.5px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+      max-width: 680px;
+    }
 
-    .card { background:#1e293b; border-radius:14px; padding:20px; border:1px solid #334155; }
+    /* ---- Counterfactual grid ---- */
+    .cf-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    }
+    @media (max-width: 720px) { .cf-grid { grid-template-columns: 1fr; } }
 
-    /* ---------- counterfactual ---------- */
-    .cf-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-    @media (max-width: 720px) { .cf-grid { grid-template-columns:1fr; } }
-    .cf { border-radius:14px; padding:18px; border:1px solid #334155; background:#1e293b; }
-    .cf.a { border-color:#16a34a; }
-    .cf.b { border-color:#dc2626; }
+    .cf-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      border: 1px solid var(--border);
+      transition: border-color var(--transition);
+    }
+    .cf-card:hover { border-color: var(--border-hover); }
+    .cf-card.safe { border-color: rgba(91,185,139,0.3); }
+    .cf-card.scam { border-color: rgba(224,96,96,0.3); }
+
     .cf-label {
-      font-size:10.5px; letter-spacing:1.1px; font-weight:700; margin-bottom:11px;
-      color:#64748b; text-transform:uppercase;
+      font-size: 10.5px; letter-spacing: 1.1px; font-weight: 700;
+      margin-bottom: 12px; color: var(--text-tertiary); text-transform: uppercase;
     }
-    .tx-block { background:#0f172a; border-radius:9px; padding:12px; margin-bottom:12px; }
-    .tx-line { display:flex; justify-content:space-between; font-size:12.5px; padding:3px 0; }
-    .tx-line span:first-child { color:#64748b; }
-    .tx-line span:last-child { color:#cbd5e1; font-weight:600; }
+    .tx-block {
+      background: var(--bg-primary); border-radius: var(--radius-sm);
+      padding: 12px 14px; margin-bottom: 12px; border: 1px solid var(--border);
+    }
+    .tx-line {
+      display: flex; justify-content: space-between; font-size: 12.5px; padding: 3px 0;
+    }
+    .tx-line span:first-child { color: var(--text-tertiary); }
+    .tx-line span:last-child { color: var(--text-primary); font-weight: 600; }
+
     .ctx-line {
-      font-size:12.5px; padding:10px 12px; border-radius:9px; margin-bottom:12px;
-      line-height:1.5;
+      font-size: 12.5px; padding: 10px 14px; border-radius: var(--radius-sm);
+      margin-bottom: 12px; line-height: 1.5;
     }
-    .ctx-none { background:#0f172a; color:#64748b; border:1px dashed #334155; }
-    .ctx-scam { background:#2e1065; color:#c4b5fd; border:1px solid #6d28d9; }
-    .cf-scores { border-top:1px solid #334155; padding-top:11px; }
-    .sc-line { display:flex; justify-content:space-between; font-size:12.5px; padding:3.5px 0; }
-    .sc-line span:first-child { color:#94a3b8; }
-    .sc-line span:last-child { font-family:ui-monospace,Menlo,monospace; color:#cbd5e1; }
-    .sc-line.big { font-size:15px; font-weight:700; padding-top:9px; margin-top:6px;
-      border-top:1px solid #334155; }
-    .sc-line.big span:last-child { font-size:19px; }
-    .cf.a .sc-line.big span:last-child { color:#4ade80; }
-    .cf.b .sc-line.big span:last-child { color:#f87171; }
+    .ctx-none {
+      background: var(--bg-primary); color: var(--text-tertiary);
+      border: 1px dashed var(--border);
+    }
+    .ctx-scam {
+      background: rgba(217,119,87,0.08); color: var(--accent);
+      border: 1px solid rgba(217,119,87,0.2);
+    }
+
+    .cf-scores { border-top: 1px solid var(--border); padding-top: 12px; }
+    .sc-line {
+      display: flex; justify-content: space-between; font-size: 12.5px; padding: 3.5px 0;
+    }
+    .sc-line span:first-child { color: var(--text-secondary); }
+    .sc-line span:last-child { font-family: var(--font-mono); color: var(--text-primary); }
+    .sc-line.big {
+      font-size: 15px; font-weight: 700; padding-top: 10px; margin-top: 6px;
+      border-top: 1px solid var(--border);
+    }
+    .sc-line.big span:last-child { font-size: 19px; }
+    .cf-card.safe .sc-line.big span:last-child { color: var(--success); }
+    .cf-card.scam .sc-line.big span:last-child { color: var(--danger); }
+
     .cf-verdict {
-      margin-top:13px; text-align:center; padding:11px; border-radius:9px;
-      font-size:14px; font-weight:700; letter-spacing:.4px;
+      margin-top: 14px; text-align: center; padding: 12px;
+      border-radius: var(--radius-sm); font-size: 14px; font-weight: 700;
+      letter-spacing: 0.3px; border: 1px solid;
     }
-    .vd-APPROVE { background:#052e1b; color:#4ade80; border:1px solid #16a34a; }
-    .vd-WARN    { background:#3a2e05; color:#facc15; border:1px solid #ca8a04; }
-    .vd-BLOCK   { background:#3a0a0a; color:#f87171; border:1px solid #dc2626; }
-    .vd-sub { font-size:10.5px; font-weight:500; opacity:.85; margin-top:3px; letter-spacing:0; }
+    .vd-APPROVE { background: var(--success-bg); color: var(--success); border-color: var(--success-border); }
+    .vd-WARN    { background: var(--warning-bg); color: var(--warning); border-color: var(--warning-border); }
+    .vd-BLOCK   { background: var(--danger-bg); color: var(--danger); border-color: var(--danger-border); }
+    .vd-sub { font-size: 11px; font-weight: 500; opacity: .85; margin-top: 4px; letter-spacing: 0; }
 
     .punch {
-      text-align:center; margin-top:18px; padding:15px;
-      background:#16223a; border-left:3px solid #3b82f6; border-radius:10px;
-      font-size:15px; color:#e2e8f0; font-weight:600;
+      text-align: center; margin-top: 20px; padding: 18px 20px;
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius-sm);
+      font-size: 15px; color: var(--text-primary); font-weight: 600;
     }
-    .punch small { display:block; font-weight:400; color:#94a3b8; font-size:12.5px;
-      margin-top:5px; line-height:1.5; }
+    .punch small {
+      display: block; font-weight: 400; color: var(--text-secondary);
+      font-size: 12.5px; margin-top: 6px; line-height: 1.6;
+    }
 
-    /* ---------- simulation ---------- */
+    /* ---- Simulation ---- */
     .sim-btn {
-      width:100%; padding:17px; border:none; border-radius:12px; cursor:pointer;
-      font-size:16px; font-weight:700; letter-spacing:.4px;
-      background:linear-gradient(90deg,#dc2626,#b91c1c); color:#fff;
+      width: 100%; padding: 16px; border: none; border-radius: var(--radius-md);
+      cursor: pointer; font-size: 15px; font-weight: 700; letter-spacing: 0.3px;
+      font-family: var(--font-sans);
+      background: var(--accent); color: #fff;
+      transition: all var(--transition);
     }
-    .sim-btn:hover { background:linear-gradient(90deg,#ef4444,#dc2626); }
-    .sim-btn:disabled { opacity:.55; cursor:default; }
+    .sim-btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    .sim-btn:active { transform: translateY(0); }
+    .sim-btn:disabled { opacity: .5; cursor: default; transform: none; }
 
-    .steps { margin-top:18px; }
+    .steps { margin-top: 20px; }
     .step {
-      border:1px solid #334155; border-radius:11px; padding:14px 16px;
-      margin-bottom:10px; background:#0f172a; opacity:.35;
-      transition: opacity .35s ease, border-color .35s ease, background .35s ease;
+      border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: 16px 18px; margin-bottom: 10px;
+      background: var(--bg-primary); opacity: .35;
+      transition: opacity 0.35s ease, border-color 0.35s ease, background 0.35s ease;
     }
-    .step.active { opacity:1; border-color:#3b82f6; background:#16223a; }
-    .step.done { opacity:1; }
+    .step.active {
+      opacity: 1; border-color: var(--accent);
+      background: var(--bg-secondary);
+    }
+    .step.done { opacity: 1; }
     .step-head {
-      display:flex; justify-content:space-between; align-items:center;
-      font-size:13.5px; font-weight:700; color:#e2e8f0; gap:10px;
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 13.5px; font-weight: 700; color: var(--text-primary); gap: 10px;
     }
     .step-num {
-      font-size:10.5px; color:#64748b; font-family:ui-monospace,Menlo,monospace;
-      flex-shrink:0;
+      font-size: 10.5px; color: var(--text-tertiary);
+      font-family: var(--font-mono); flex-shrink: 0;
     }
-    .step-body { margin-top:9px; font-size:12.5px; color:#94a3b8; line-height:1.6; display:none; }
-    .step.active .step-body, .step.done .step-body { display:block; }
+    .step-body {
+      margin-top: 10px; font-size: 12.5px; color: var(--text-secondary);
+      line-height: 1.6; display: none;
+    }
+    .step.active .step-body, .step.done .step-body { display: block; }
 
     .phone {
-      background:#0f172a; border:1px solid #475569; border-radius:11px;
-      padding:15px; text-align:center;
+      background: var(--bg-primary); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 16px; text-align: center;
     }
-    .phone .num { font-size:19px; font-weight:700; color:#e2e8f0; letter-spacing:1px; }
-    .phone .who { font-size:12px; color:#94a3b8; margin-top:3px; }
-    .ring { display:inline-block; animation: ring 1s infinite; font-size:23px; }
+    .phone .num { font-size: 19px; font-weight: 700; color: var(--text-primary); letter-spacing: 1px; }
+    .phone .who { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+    .ring { display: inline-block; animation: ring 1s infinite; font-size: 22px; }
     @keyframes ring { 0%,100%{transform:rotate(-11deg)} 50%{transform:rotate(11deg)} }
 
     .flag {
-      display:block; font-size:12.5px; color:#fca5a5; padding:5px 0;
-      animation: slidein .35s ease;
+      display: block; font-size: 12.5px; color: var(--accent); padding: 5px 0;
+      animation: slidein 0.35s ease;
     }
     @keyframes slidein { from{opacity:0;transform:translateX(-9px)} to{opacity:1;transform:none} }
-    .flag .pts { color:#f87171; font-weight:700; font-family:ui-monospace,Menlo,monospace; }
+    .flag .pts {
+      color: var(--danger); font-weight: 700; font-family: var(--font-mono);
+    }
 
     .transcript {
-      background:#0f172a; border:1px solid #334155; border-radius:9px;
-      padding:11px 13px; font-size:12px; color:#cbd5e1; line-height:1.6;
-      margin-top:9px; white-space:pre-wrap;
+      background: var(--bg-primary); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 12px 14px;
+      font-size: 12px; color: var(--text-secondary); line-height: 1.65;
+      margin-top: 10px; white-space: pre-wrap;
     }
-    .meter { display:flex; align-items:center; gap:10px; margin-top:11px; }
-    .meter-bar { flex:1; height:13px; background:#1e293b; border:1px solid #334155;
-      border-radius:999px; overflow:hidden; }
-    .meter-fill { height:100%; width:0; border-radius:999px; transition:width .8s ease; }
-    .mf-voice { background:linear-gradient(90deg,#7c3aed,#a78bfa); }
-    .mf-txn   { background:linear-gradient(90deg,#1d4ed8,#60a5fa); }
-    .mf-final { background:linear-gradient(90deg,#dc2626,#f87171); }
-    .meter-num { font-family:ui-monospace,Menlo,monospace; font-weight:700; font-size:13px;
-      min-width:62px; text-align:right; color:#e2e8f0; }
+    .meter { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+    .meter-bar {
+      flex: 1; height: 10px; background: var(--bg-primary);
+      border: 1px solid var(--border); border-radius: var(--radius-pill); overflow: hidden;
+    }
+    .meter-fill {
+      height: 100%; width: 0; border-radius: var(--radius-pill);
+      transition: width 0.8s ease;
+    }
+    .mf-voice { background: linear-gradient(90deg, var(--accent), #E8A080); }
+    .mf-txn   { background: linear-gradient(90deg, #5B8FD4, #8AB4E8); }
+    .mf-final { background: linear-gradient(90deg, var(--danger), #E89090); }
+    .meter-num {
+      font-family: var(--font-mono); font-weight: 700; font-size: 13px;
+      min-width: 58px; text-align: right; color: var(--text-primary);
+    }
 
-    .fuse-line { display:flex; justify-content:space-between; font-size:13px; padding:4px 0;
-      color:#94a3b8; }
-    .fuse-line span:last-child { font-family:ui-monospace,Menlo,monospace; color:#cbd5e1; }
-    .fuse-line.total { border-top:1px solid #334155; margin-top:8px; padding-top:9px;
-      font-weight:700; color:#e2e8f0; }
-    .fuse-line.total span:last-child { color:#f87171; font-size:16px; }
+    .fuse-line {
+      display: flex; justify-content: space-between; font-size: 13px;
+      padding: 4px 0; color: var(--text-secondary);
+    }
+    .fuse-line span:last-child { font-family: var(--font-mono); color: var(--text-primary); }
+    .fuse-line.total {
+      border-top: 1px solid var(--border); margin-top: 8px; padding-top: 10px;
+      font-weight: 700; color: var(--text-primary);
+    }
+    .fuse-line.total span:last-child { color: var(--danger); font-size: 16px; }
 
     .alert-final {
-      border-radius:11px; padding:16px; text-align:center; margin-top:4px;
-      background:#3a0a0a; border:1px solid #dc2626;
+      border-radius: var(--radius-lg); padding: 18px; text-align: center;
+      margin-top: 4px; background: var(--danger-bg);
+      border: 1px solid var(--danger-border);
     }
-    .alert-final .big { font-size:18px; font-weight:800; color:#f87171; letter-spacing:.5px; }
-    .alert-final .why { font-size:12.5px; color:#e2e8f0; margin-top:9px; line-height:1.6; }
-    .choice { display:flex; gap:10px; margin-top:14px; }
+    .alert-final .big {
+      font-size: 18px; font-weight: 800; color: var(--danger);
+      letter-spacing: 0.3px;
+    }
+    .alert-final .why {
+      font-size: 12.5px; color: var(--text-primary); margin-top: 10px; line-height: 1.65;
+    }
+
+    .choice { display: flex; gap: 10px; margin-top: 14px; }
     .choice button {
-      flex:1; padding:12px; border:none; border-radius:9px; cursor:pointer;
-      font-size:13px; font-weight:600;
+      flex: 1; padding: 12px; border: none; border-radius: var(--radius-sm);
+      cursor: pointer; font-size: 13px; font-weight: 600; font-family: var(--font-sans);
+      transition: all var(--transition);
     }
-    .btn-stop { background:#dc2626; color:#fff; }
-    .btn-go { background:#475569; color:#e2e8f0; }
-    .chosen { text-align:center; font-size:12.5px; color:#4ade80; margin-top:11px; display:none; }
+    .btn-stop { background: var(--danger); color: #fff; }
+    .btn-stop:hover { background: #D04D4D; }
+    .btn-go { background: var(--bg-elevated); color: var(--text-primary); border: 1px solid var(--border); }
+    .btn-go:hover { background: #3D3D3D; }
+
+    .chosen {
+      text-align: center; font-size: 12.5px; color: var(--success);
+      margin-top: 12px; display: none;
+    }
 
     .errbox {
-      display:none; background:#3a0a0a; border:1px solid #dc2626; border-radius:10px;
-      padding:13px 15px; font-size:12.5px; color:#fca5a5; margin-top:14px; line-height:1.5;
+      display: none; background: var(--danger-bg); border: 1px solid var(--danger-border);
+      border-radius: var(--radius-sm); padding: 14px 16px;
+      font-size: 12.5px; color: var(--danger); margin-top: 14px; line-height: 1.55;
     }
-    .loading { color:#60a5fa; font-size:12.5px; }
+    .loading { color: var(--accent); font-size: 12.5px; }
   </style>
 </head>
 <body>
-<div class="wrap">
 
-  <header>
-    <h1>🛡️ UPI Guardian</h1>
-    <div class="tag">Real-time AI fraud protection — voice and payment, analysed together</div>
-    <div class="badges">
-      <span class="badge live">🟢 System active</span>
-      <span class="badge demo">DEMO MODE</span>
-      <span class="badge" id="asrBadge">Checking speech engine…</span>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <span class="sidebar-logo">🛡️</span>
+        <span class="sidebar-title">Fraud Shield</span>
+      </div>
+      <p class="sidebar-subtitle">Explainable real-time UPI fraud detection</p>
     </div>
-    <div class="nav">
-      <a href="/">🛡️ Payment shield</a>
-      <a href="/stats.html">📊 Live performance</a>
-      <a href="/review.html">🏦 Bank review console</a>
+    <nav class="sidebar-nav">
+      <a href="/" class="nav-item">
+        <span class="nav-icon">🛡️</span> Payment Shield
+      </a>
+      <a href="/demo.html" class="nav-item active">
+        <span class="nav-icon">▶️</span> Live Demo
+      </a>
+      <a href="/stats.html" class="nav-item">
+        <span class="nav-icon">📊</span> Performance
+      </a>
+      <a href="/review.html" class="nav-item">
+        <span class="nav-icon">🏦</span> Bank Review
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <span class="sidebar-badge">SOA Ideathon 2026 · S40</span>
     </div>
-  </header>
+  </aside>
 
-  <!-- ================= PRIORITY 4: COUNTERFACTUAL ================= -->
-  <section>
-    <div class="sec-head"><h2>Why context matters</h2></div>
-    <div class="sec-sub">
-      The identical payment, judged twice. Same amount, same payee, same device, same city,
-      same moment. The only difference is whether a scam call was happening at the time.
-      Both scores below come from the live risk engine — nothing here is staged.
-    </div>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-    <div class="cf-grid">
-      <div class="cf a" id="cfA">
-        <div class="cf-label">Scenario A — no call</div>
-        <div class="tx-block" id="txA"></div>
-        <div class="ctx-line ctx-none">📞 No call — the user initiated this payment themselves</div>
-        <div class="cf-scores" id="scoresA"><div class="loading">Scoring…</div></div>
-        <div class="cf-verdict vd-APPROVE" id="verdictA">…</div>
+  <main class="main-content">
+    <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">☰</button>
+
+    <div class="content-wrap wide">
+
+      <div class="page-header">
+        <h1>🛡️ UPI Guardian — Live Demo</h1>
+        <p class="page-description">
+          Real-time AI fraud protection — voice and payment, analysed together
+        </p>
+        <div class="demo-badges">
+          <span class="demo-badge live">🟢 System active</span>
+          <span class="demo-badge demo-mode">DEMO MODE</span>
+          <span class="demo-badge" id="asrBadge">Checking speech engine…</span>
+        </div>
       </div>
 
-      <div class="cf b" id="cfB">
-        <div class="cf-label">Scenario B — same payment, scam call in progress</div>
-        <div class="tx-block" id="txB"></div>
-        <div class="ctx-line ctx-scam" id="ctxB">📞 Scam call detected during payment</div>
-        <div class="cf-scores" id="scoresB"><div class="loading">Scoring…</div></div>
-        <div class="cf-verdict vd-BLOCK" id="verdictB">…</div>
+      <!-- ================= COUNTERFACTUAL ================= -->
+      <div class="demo-section">
+        <h2>Why context matters</h2>
+        <div class="sec-sub">
+          The identical payment, judged twice. Same amount, same payee, same device, same city,
+          same moment. The only difference is whether a scam call was happening at the time.
+          Both scores below come from the live risk engine — nothing here is staged.
+        </div>
+
+        <div class="cf-grid">
+          <div class="cf-card safe" id="cfA">
+            <div class="cf-label">Scenario A — no call</div>
+            <div class="tx-block" id="txA"></div>
+            <div class="ctx-line ctx-none">📞 No call — the user initiated this payment themselves</div>
+            <div class="cf-scores" id="scoresA"><div class="loading">Scoring…</div></div>
+            <div class="cf-verdict vd-APPROVE" id="verdictA">…</div>
+          </div>
+
+          <div class="cf-card scam" id="cfB">
+            <div class="cf-label">Scenario B — same payment, scam call in progress</div>
+            <div class="tx-block" id="txB"></div>
+            <div class="ctx-line ctx-scam" id="ctxB">📞 Scam call detected during payment</div>
+            <div class="cf-scores" id="scoresB"><div class="loading">Scoring…</div></div>
+            <div class="cf-verdict vd-BLOCK" id="verdictB">…</div>
+          </div>
+        </div>
+
+        <div class="punch" id="punch">
+          The transaction didn't change. The context did.
+          <small id="punchSub">Loading the comparison…</small>
+        </div>
+        <div class="errbox" id="cfError"></div>
       </div>
-    </div>
 
-    <div class="punch" id="punch">
-      The transaction didn't change. The context did.
-      <small id="punchSub">Loading the comparison…</small>
-    </div>
-    <div class="errbox" id="cfError"></div>
-  </section>
+      <!-- ================= LIVE ATTACK SIMULATION ================= -->
+      <div class="demo-section">
+        <h2>Live attack simulation</h2>
+        <div class="sec-sub">
+          Runs the whole pipeline end to end — incoming call, speech-to-text, voice analysis,
+          the payment attempt, and the fusion decision. Every score is fetched from the backend
+          as the simulation runs.
+        </div>
 
-  <!-- ================= PRIORITY 3: LIVE ATTACK SIMULATION ================= -->
-  <section>
-    <div class="sec-head"><h2>Live attack simulation</h2></div>
-    <div class="sec-sub">
-      Runs the whole pipeline end to end — incoming call, speech-to-text, voice analysis,
-      the payment attempt, and the fusion decision. Every score is fetched from the backend
-      as the simulation runs.
-    </div>
+        <div class="card">
+          <button class="sim-btn" id="simBtn" onclick="runSimulation()">
+            ▶  SIMULATE FRAUD ATTACK
+          </button>
 
-    <div class="card">
-      <button class="sim-btn" id="simBtn" onclick="runSimulation()">
-        ▶  SIMULATE FRAUD ATTACK
-      </button>
+          <div class="steps" id="steps" style="display:none;">
 
-      <div class="steps" id="steps" style="display:none;">
-
-        <div class="step" id="s1">
-          <div class="step-head"><span>📞 Incoming call</span><span class="step-num">STEP 1</span></div>
-          <div class="step-body">
-            <div class="phone">
-              <div class="ring">📞</div>
-              <div class="num">+91 98XXX XXXXX</div>
-              <div class="who">Caller claims to represent your bank</div>
+            <div class="step" id="s1">
+              <div class="step-head"><span>📞 Incoming call</span><span class="step-num">STEP 1</span></div>
+              <div class="step-body">
+                <div class="phone">
+                  <div class="ring">📞</div>
+                  <div class="num">+91 98XXX XXXXX</div>
+                  <div class="who">Caller claims to represent your bank</div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div class="step" id="s2">
-          <div class="step-head"><span>🎙️ Listening and transcribing</span><span class="step-num">STEP 2</span></div>
-          <div class="step-body">
-            <div id="s2status" class="loading">Capturing call audio…</div>
-            <div class="transcript" id="s2transcript" style="display:none;"></div>
-          </div>
-        </div>
-
-        <div class="step" id="s3">
-          <div class="step-head"><span>⚠️ Voice analysis</span><span class="step-num">STEP 3</span></div>
-          <div class="step-body">
-            <div id="s3flags"></div>
-            <div class="meter">
-              <div class="meter-bar"><div class="meter-fill mf-voice" id="s3bar"></div></div>
-              <div class="meter-num" id="s3num">0/100</div>
+            <div class="step" id="s2">
+              <div class="step-head"><span>🎙️ Listening and transcribing</span><span class="step-num">STEP 2</span></div>
+              <div class="step-body">
+                <div id="s2status" class="loading">Capturing call audio…</div>
+                <div class="transcript" id="s2transcript" style="display:none;"></div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div class="step" id="s4">
-          <div class="step-head"><span>💳 UPI payment attempted</span><span class="step-num">STEP 4</span></div>
-          <div class="step-body"><div class="tx-block" id="s4tx"></div></div>
-        </div>
-
-        <div class="step" id="s5">
-          <div class="step-head"><span>⚠️ Transaction analysis</span><span class="step-num">STEP 5</span></div>
-          <div class="step-body">
-            <div id="s5flags"></div>
-            <div class="meter">
-              <div class="meter-bar"><div class="meter-fill mf-txn" id="s5bar"></div></div>
-              <div class="meter-num" id="s5num">0/100</div>
+            <div class="step" id="s3">
+              <div class="step-head"><span>⚠️ Voice analysis</span><span class="step-num">STEP 3</span></div>
+              <div class="step-body">
+                <div id="s3flags"></div>
+                <div class="meter">
+                  <div class="meter-bar"><div class="meter-fill mf-voice" id="s3bar"></div></div>
+                  <div class="meter-num" id="s3num">0/100</div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div class="step" id="s6">
-          <div class="step-head"><span>🔗 Fusion engine</span><span class="step-num">STEP 6</span></div>
-          <div class="step-body">
-            <div class="fuse-line"><span>Transaction risk</span><span id="f1">—</span></div>
-            <div class="fuse-line"><span>Voice risk (weighted 60%)</span><span id="f2">—</span></div>
-            <div class="fuse-line total"><span>Combined risk</span><span id="f3">—</span></div>
-            <div class="meter">
-              <div class="meter-bar"><div class="meter-fill mf-final" id="s6bar"></div></div>
-              <div class="meter-num" id="s6num">0/100</div>
+            <div class="step" id="s4">
+              <div class="step-head"><span>💳 UPI payment attempted</span><span class="step-num">STEP 4</span></div>
+              <div class="step-body"><div class="tx-block" id="s4tx"></div></div>
             </div>
-          </div>
-        </div>
 
-        <div class="step" id="s7">
-          <div class="step-head"><span>🚨 Action</span><span class="step-num">STEP 7</span></div>
-          <div class="step-body">
-            <div class="alert-final">
-              <div class="big" id="s7title">HIGH FRAUD RISK</div>
-              <div class="why" id="s7why"></div>
+            <div class="step" id="s5">
+              <div class="step-head"><span>⚠️ Transaction analysis</span><span class="step-num">STEP 5</span></div>
+              <div class="step-body">
+                <div id="s5flags"></div>
+                <div class="meter">
+                  <div class="meter-bar"><div class="meter-fill mf-txn" id="s5bar"></div></div>
+                  <div class="meter-num" id="s5num">0/100</div>
+                </div>
+              </div>
             </div>
-            <div class="choice">
-              <button class="btn-stop" onclick="simChoice('CANCELLED')">Cancel payment</button>
-              <button class="btn-go" onclick="simChoice('CONFIRMED')">This is legitimate — proceed</button>
-            </div>
-            <div class="chosen" id="s7chosen"></div>
-          </div>
-        </div>
 
+            <div class="step" id="s6">
+              <div class="step-head"><span>🔗 Fusion engine</span><span class="step-num">STEP 6</span></div>
+              <div class="step-body">
+                <div class="fuse-line"><span>Transaction risk</span><span id="f1">—</span></div>
+                <div class="fuse-line"><span>Voice risk (weighted 60%)</span><span id="f2">—</span></div>
+                <div class="fuse-line total"><span>Combined risk</span><span id="f3">—</span></div>
+                <div class="meter">
+                  <div class="meter-bar"><div class="meter-fill mf-final" id="s6bar"></div></div>
+                  <div class="meter-num" id="s6num">0/100</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step" id="s7">
+              <div class="step-head"><span>🚨 Action</span><span class="step-num">STEP 7</span></div>
+              <div class="step-body">
+                <div class="alert-final">
+                  <div class="big" id="s7title">HIGH FRAUD RISK</div>
+                  <div class="why" id="s7why"></div>
+                </div>
+                <div class="choice">
+                  <button class="btn-stop" onclick="simChoice('CANCELLED')">Cancel payment</button>
+                  <button class="btn-go" onclick="simChoice('CONFIRMED')">This is legitimate — proceed</button>
+                </div>
+                <div class="chosen" id="s7chosen"></div>
+              </div>
+            </div>
+
+          </div>
+          <div class="errbox" id="simError"></div>
+        </div>
       </div>
-      <div class="errbox" id="simError"></div>
-    </div>
-  </section>
 
+    </div>
+  </main>
 </div>
 
 <script>
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('open');
+  }
+
   // ---------------------------------------------------------------
   // ONE transaction object, used by both counterfactual scenarios and
   // by the simulation. Reusing the same object is the whole point:
@@ -546,7 +657,7 @@
       const s5f = document.getElementById("s5flags");
       s5f.innerHTML = "";
       if (!txnSignals.length) {
-        s5f.innerHTML = '<div class="flag" style="color:#4ade80">✓ Nothing unusual in the payment on its own</div>';
+        s5f.innerHTML = '<div class="flag" style="color:var(--success)">✓ Nothing unusual in the payment on its own</div>';
       }
       for (const sig of txnSignals) {
         const d = document.createElement("div");
