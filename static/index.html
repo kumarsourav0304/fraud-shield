@@ -601,11 +601,7 @@
         <label>Phone call before this payment</label>
         <select id="call" onchange="onCallChange()">
           <option value="none">No call — user paid on their own</option>
-          <option value="scamcall">Scam call (English) — "bank official", OTP, urgent, don't tell anyone</option>
-          <option value="digital_arrest">Digital arrest call — "supreme court order, stay on video call"</option>
-          <option value="hinglish">Hinglish vishing — "bank se bol raha hoon, account block ho jayega"</option>
-          <option value="remote_access">Remote access — "install AnyDesk on your phone, share screen"</option>
-          <option value="benign_edu">Benign discussion — "Digital arrest scams are increasing in India"</option>
+          <option value="scamcall">Scam call — "bank official", OTP, urgent, don't tell anyone</option>
           <option value="normalcall">Normal call — a friend about lunch</option>
           <option value="audio">Real audio — upload or record a call</option>
         </select>
@@ -727,10 +723,6 @@
   const CALLS = {
     none: "",
     scamcall: "Hello, I am calling from your bank. Your account is frozen due to suspicious activity. This is urgent, you must act now. Do not tell anyone about this call. Please share the OTP to verify and make a small refundable payment to unblock your account.",
-    digital_arrest: "You are under digital arrest by order of the supreme court. Stay on this video call. Transfer ₹25,000 immediately to verify your identity or an arrest warrant will be executed.",
-    hinglish: "Sir main bank se bol raha hoon. Aapka account block ho jayega agar abhi payment nahi kiya. Turant OTP batao aur kisi ko mat batao.",
-    remote_access: "Sir please install AnyDesk on your phone and share your screen with me. I need remote access to fix the banking security error. Do not hang up.",
-    benign_edu: "Digital arrest scams are increasing in India. Yesterday I read about how scammers impersonate police officers and ask people to transfer money.",
     normalcall: "Hey, are we still meeting for lunch tomorrow? I'll book the table for one o'clock. Let me know if that works."
   };
 
