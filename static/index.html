@@ -517,23 +517,22 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="sidebar-brand">
-        <span class="sidebar-logo">🛡️</span>
         <span class="sidebar-title">Fraud Shield</span>
       </div>
       <p class="sidebar-subtitle">Explainable real-time UPI fraud detection</p>
     </div>
     <nav class="sidebar-nav">
       <a href="/" class="nav-item active">
-        <span class="nav-icon">🛡️</span> Payment Shield
+        Payment Shield
       </a>
       <a href="/demo.html" class="nav-item">
-        <span class="nav-icon">▶️</span> Live Demo
+        Live Demo
       </a>
       <a href="/stats.html" class="nav-item">
-        <span class="nav-icon">📊</span> Performance
+        Performance
       </a>
       <a href="/review.html" class="nav-item">
-        <span class="nav-icon">🏦</span> Bank Review
+        Bank Review
       </a>
     </nav>
     <div class="sidebar-footer">
@@ -548,7 +547,7 @@
 
     <div class="content-wrap">
       <div class="page-header">
-        <h1>🛡️ Explainable Fraud Shield</h1>
+        <h1>Explainable Fraud Shield</h1>
         <p class="page-description">
           Multimodal UPI fraud detection — the payment and the call analysed together,
           with a plain-language warning and a reason for every point of risk. The user
@@ -565,7 +564,7 @@
           <option value="scam">U001 — ₹49,999 to unknown payee, new device, other city</option>
           <option value="mild">U001 — ₹2,000 to a new payee, same device &amp; city</option>
           <option value="burst">U001 — 5 rapid payments in 10 mins (velocity burst)</option>
-          <option value="custom">✏️ Custom — build your own transaction</option>
+          <option value="custom">Custom — build your own transaction</option>
         </select>
 
         <div id="customFields">
@@ -608,17 +607,17 @@
           <option value="remote_access">Remote access — "install AnyDesk on your phone, share screen"</option>
           <option value="benign_edu">Benign discussion — "Digital arrest scams are increasing in India"</option>
           <option value="normalcall">Normal call — a friend about lunch</option>
-          <option value="audio">🎙️ Real audio — upload or record a call</option>
+          <option value="audio">Real audio — upload or record a call</option>
         </select>
 
         <div class="audio-panel" id="audioPanel" style="display:none;">
           <div class="asr-badge" id="asrBadge">Whisper speech-to-text</div>
           <div class="audio-row">
             <button class="btn-file" onclick="document.getElementById('audioFile').click()">
-              📁 Choose audio file
+              Choose audio file
             </button>
             <button class="btn-mic" id="micBtn" onclick="toggleRecording()">
-              🎙️ Record call
+              Record call
             </button>
           </div>
           <input type="file" id="audioFile" accept="audio/*" onchange="uploadAudio(this.files[0])" />
@@ -646,7 +645,7 @@
         <div class="fusion-title">FRAUD ANALYSIS</div>
 
         <div class="lane voice" id="laneVoice">
-          <div class="lane-head"><span>📞 VOICE ANALYSIS</span><span id="voiceCount"></span></div>
+          <div class="lane-head"><span>VOICE ANALYSIS</span><span id="voiceCount"></span></div>
           <div id="voiceRows"></div>
           <div class="bar-label">VOICE RISK</div>
           <div class="bar-wrap">
@@ -658,7 +657,7 @@
         <div class="connector">+</div>
 
         <div class="lane txn" id="laneTxn">
-          <div class="lane-head"><span>💳 TRANSACTION ANALYSIS</span><span id="txnCount"></span></div>
+          <div class="lane-head"><span>TRANSACTION ANALYSIS</span><span id="txnCount"></span></div>
           <div id="txnRows"></div>
           <div class="bar-label">TRANSACTION RISK</div>
           <div class="bar-wrap">
@@ -670,7 +669,7 @@
         <div class="connector">↓</div>
 
         <div class="fusion-box">
-          <div class="fusion-head">🔗 FUSION ENGINE</div>
+          <div class="fusion-head">FUSION ENGINE</div>
           <div class="fmath"><span>Transaction risk</span><span id="fTxn">0</span></div>
           <div class="fmath"><span>Voice risk (weighted)</span><span id="fVoice">0</span></div>
           <div class="fmath total"><span>Combined risk</span><span id="fTotal">0 / 100</span></div>
@@ -694,7 +693,7 @@
           <ul class="signals" id="signals"></ul>
 
           <button class="privacy-toggle" onclick="togglePrivacy()" id="privBtn">
-            🔒 What data left this phone?
+            What data left this phone?
           </button>
           <div class="privacy-panel" id="privacyPanel"></div>
         </div>
@@ -703,7 +702,7 @@
           <button class="btn-confirm" onclick="decide('CONFIRMED')">Confirm payment</button>
           <button class="btn-cancel" onclick="decide('CANCELLED')">Cancel</button>
         </div>
-        <div class="logged" id="logged">✓ Decision recorded in audit log</div>
+        <div class="logged" id="logged">Decision recorded in the audit log</div>
       </div>
     </div>
   </main>
@@ -863,13 +862,13 @@
       mediaRecorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
       mediaRecorder.onstop = () => {
         stream.getTracks().forEach(t => t.stop());
-        btn.textContent = "🎙️ Record call";
+        btn.textContent = "Record call";
         btn.classList.remove("recording");
         const blob = new Blob(chunks, { type: mediaRecorder.mimeType || "audio/webm" });
         uploadAudio(new File([blob], "recording.webm", { type: blob.type }));
       };
       mediaRecorder.start();
-      btn.textContent = "⏹ Stop recording";
+      btn.textContent = "Stop recording";
       btn.classList.add("recording");
       setAsrStatus("Recording… speak the call, then press stop.", "busy");
     } catch (e) {
@@ -935,10 +934,10 @@
   // The final band never says "blocked": the system escalates friction,
   // it does not stop a payment the user insists on making.
   const FINAL_BAND = {
-    APPROVE: { text: "🟢 LOW FRAUD RISK", sub: "Nothing unusual — safe to continue" },
-    VERIFY:  { text: "🔵 SECONDARY VERIFICATION", sub: "Unusual payee or minor anomaly — check before paying" },
-    WARN:    { text: "🟡 MODERATE FRAUD RISK", sub: "Check before continuing — you decide" },
-    BLOCK:   { text: "🔴 HIGH FRAUD RISK", sub: "Confirm to proceed — payment is not blocked" }
+    APPROVE: { text: "LOW FRAUD RISK", sub: "Nothing unusual — safe to continue" },
+    VERIFY:  { text: "SECONDARY VERIFICATION", sub: "Unusual payee or minor anomaly — check before paying" },
+    WARN:    { text: "MODERATE FRAUD RISK", sub: "Check before continuing — you decide" },
+    BLOCK:   { text: "HIGH FRAUD RISK", sub: "Confirm to proceed — payment is not blocked" }
   };
 
   function describeError(status, body) {
@@ -1103,19 +1102,19 @@
     if (data.latency_ms !== undefined) {
       const l = document.createElement("span");
       l.className = "chip latency";
-      l.textContent = "⚡ Scored in " + data.latency_ms + " ms";
+      l.textContent = "Latency: " + data.latency_ms + " ms";
       meta.appendChild(l);
     }
     if (data.nlp && data.nlp.intent && data.nlp.intent !== "UNAVAILABLE") {
       const nlpChip = document.createElement("span");
       nlpChip.className = "chip asr";
-      nlpChip.textContent = "🧠 NLP: " + data.nlp.intent + " (" + Math.round((data.nlp.confidence || 0) * 100) + "%)";
+      nlpChip.textContent = "NLP: " + data.nlp.intent + " (" + Math.round((data.nlp.confidence || 0) * 100) + "%)";
       meta.appendChild(nlpChip);
     }
     if (asrMeta && callSelect.value === "audio") {
       const a = document.createElement("span");
       a.className = "chip asr";
-      a.textContent = "🎙️ Whisper " + asrMeta.model + " · " +
+      a.textContent = "Whisper " + asrMeta.model + " · " +
                       asrMeta.audio_seconds + "s audio in " + asrMeta.transcribe_ms + " ms";
       meta.appendChild(a);
     }
@@ -1165,7 +1164,7 @@
     const btn = document.getElementById("privBtn");
     panel.innerHTML = "";
     panel.style.display = "none";
-    btn.textContent = "🔒 What data left this phone?";
+    btn.textContent = "What data left this phone?";
 
     if (!priv) { btn.style.display = "none"; return; }
     btn.style.display = "block";
@@ -1174,7 +1173,7 @@
     outGroup.className = "priv-group";
     const outTitle = document.createElement("div");
     outTitle.className = "priv-title out";
-    outTitle.textContent = "↗ Sent to the risk service";
+    outTitle.textContent = "Sent to the risk service";
     outGroup.appendChild(outTitle);
 
     (priv.transmitted || []).forEach(item => {
@@ -1193,7 +1192,7 @@
     neverGroup.className = "priv-group";
     const nTitle = document.createElement("div");
     nTitle.className = "priv-title never";
-    nTitle.textContent = "✕ Never leaves the device";
+    nTitle.textContent = "Never leaves the device";
     neverGroup.appendChild(nTitle);
     (priv.never_transmitted || []).forEach(txt => {
       const tag = document.createElement("span");
@@ -1209,7 +1208,7 @@
     const btn = document.getElementById("privBtn");
     const open = panel.style.display === "block";
     panel.style.display = open ? "none" : "block";
-    btn.textContent = open ? "🔒 What data left this phone?" : "🔒 Hide data detail";
+    btn.textContent = open ? "What data left this phone?" : "Hide data detail";
   }
 
   async function decide(action) {

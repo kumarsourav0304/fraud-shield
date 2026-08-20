@@ -1,9 +1,9 @@
-# 🛡️ Explainable Real-Time Fraud Shield (Hybrid Architecture)
+# Explainable Real-Time Fraud Shield (Hybrid Architecture)
 
 **SIH / SOA IDEATHON 2026 — Problem Statement S40 (Fintech)**  
 *Explainable Real-Time UPI Fraud Detection across Transactions, Voice Phishing, and Social Engineering.*
 
-🔗 **Live Demo:** https://fraud-shield-b1h3.onrender.com  
+**Live Demo:** https://fraud-shield-b1h3.onrender.com  
 *(Free hosting — cold start may take ~50s on initial load, then sub-second response.)*
 
 ---

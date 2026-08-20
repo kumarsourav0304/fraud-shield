@@ -120,23 +120,22 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="sidebar-brand">
-        <span class="sidebar-logo">🛡️</span>
         <span class="sidebar-title">Fraud Shield</span>
       </div>
       <p class="sidebar-subtitle">Explainable real-time UPI fraud detection</p>
     </div>
     <nav class="sidebar-nav">
       <a href="/" class="nav-item">
-        <span class="nav-icon">🛡️</span> Payment Shield
+        Payment Shield
       </a>
       <a href="/demo.html" class="nav-item">
-        <span class="nav-icon">▶️</span> Live Demo
+        Live Demo
       </a>
       <a href="/stats.html" class="nav-item">
-        <span class="nav-icon">📊</span> Performance
+        Performance
       </a>
       <a href="/review.html" class="nav-item active">
-        <span class="nav-icon">🏦</span> Bank Review
+        Bank Review
       </a>
     </nav>
     <div class="sidebar-footer">
@@ -151,7 +150,7 @@
 
     <div class="content-wrap wide">
       <div class="page-header">
-        <h1>🏦 Bank Review Console</h1>
+        <h1>Bank Review Console</h1>
         <p class="page-description">
           Every shield decision and the user's response — for false-positive review
           and audit. The shield never hard-blocks a payment; the user can always confirm.
@@ -318,7 +317,7 @@
         <td>${esc(r.score)}</td>
         <td>${esc(r.confidence || '—')}</td>
         <td class="action-${actionClass}">${esc(r.user_action)}</td>
-        <td>${override ? '<span class="flag-tag">⚑ review</span>' : ''}</td>
+        <td>${override ? '<span class="flag-tag">Review</span>' : ''}</td>
         <td>${outcomeCell(r)}</td>
       </tr>`;
     }).join("");

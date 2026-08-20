@@ -247,23 +247,22 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="sidebar-brand">
-        <span class="sidebar-logo">🛡️</span>
         <span class="sidebar-title">Fraud Shield</span>
       </div>
       <p class="sidebar-subtitle">Explainable real-time UPI fraud detection</p>
     </div>
     <nav class="sidebar-nav">
       <a href="/" class="nav-item">
-        <span class="nav-icon">🛡️</span> Payment Shield
+        Payment Shield
       </a>
       <a href="/demo.html" class="nav-item active">
-        <span class="nav-icon">▶️</span> Live Demo
+        Live Demo
       </a>
       <a href="/stats.html" class="nav-item">
-        <span class="nav-icon">📊</span> Performance
+        Performance
       </a>
       <a href="/review.html" class="nav-item">
-        <span class="nav-icon">🏦</span> Bank Review
+        Bank Review
       </a>
     </nav>
     <div class="sidebar-footer">
@@ -279,12 +278,12 @@
     <div class="content-wrap wide">
 
       <div class="page-header">
-        <h1>🛡️ UPI Guardian — Live Demo</h1>
+        <h1>UPI Guardian — Live Demo</h1>
         <p class="page-description">
           Real-time AI fraud protection — voice and payment, analysed together
         </p>
         <div class="demo-badges">
-          <span class="demo-badge live">🟢 System active</span>
+          <span class="demo-badge live">System active</span>
           <span class="demo-badge demo-mode">DEMO MODE</span>
           <span class="demo-badge" id="asrBadge">Checking speech engine…</span>
         </div>
@@ -303,7 +302,7 @@
           <div class="cf-card safe" id="cfA">
             <div class="cf-label">Scenario A — no call</div>
             <div class="tx-block" id="txA"></div>
-            <div class="ctx-line ctx-none">📞 No call — the user initiated this payment themselves</div>
+            <div class="ctx-line ctx-none">No call — the user initiated this payment themselves</div>
             <div class="cf-scores" id="scoresA"><div class="loading">Scoring…</div></div>
             <div class="cf-verdict vd-APPROVE" id="verdictA">…</div>
           </div>
@@ -311,7 +310,7 @@
           <div class="cf-card scam" id="cfB">
             <div class="cf-label">Scenario B — same payment, scam call in progress</div>
             <div class="tx-block" id="txB"></div>
-            <div class="ctx-line ctx-scam" id="ctxB">📞 Scam call detected during payment</div>
+            <div class="ctx-line ctx-scam" id="ctxB">Scam call detected during payment</div>
             <div class="cf-scores" id="scoresB"><div class="loading">Scoring…</div></div>
             <div class="cf-verdict vd-BLOCK" id="verdictB">…</div>
           </div>
@@ -335,16 +334,15 @@
 
         <div class="card">
           <button class="sim-btn" id="simBtn" onclick="runSimulation()">
-            ▶  SIMULATE FRAUD ATTACK
+            Simulate Fraud Attack
           </button>
 
           <div class="steps" id="steps" style="display:none;">
 
             <div class="step" id="s1">
-              <div class="step-head"><span>📞 Incoming call</span><span class="step-num">STEP 1</span></div>
+              <div class="step-head"><span>Incoming call</span><span class="step-num">STEP 1</span></div>
               <div class="step-body">
                 <div class="phone">
-                  <div class="ring">📞</div>
                   <div class="num">+91 98XXX XXXXX</div>
                   <div class="who">Caller claims to represent your bank</div>
                 </div>
@@ -352,7 +350,7 @@
             </div>
 
             <div class="step" id="s2">
-              <div class="step-head"><span>🎙️ Listening and transcribing</span><span class="step-num">STEP 2</span></div>
+              <div class="step-head"><span>Listening and transcribing</span><span class="step-num">STEP 2</span></div>
               <div class="step-body">
                 <div id="s2status" class="loading">Capturing call audio…</div>
                 <div class="transcript" id="s2transcript" style="display:none;"></div>
@@ -360,7 +358,7 @@
             </div>
 
             <div class="step" id="s3">
-              <div class="step-head"><span>⚠️ Voice analysis</span><span class="step-num">STEP 3</span></div>
+              <div class="step-head"><span>Voice analysis</span><span class="step-num">STEP 3</span></div>
               <div class="step-body">
                 <div id="s3flags"></div>
                 <div class="meter">
@@ -371,12 +369,12 @@
             </div>
 
             <div class="step" id="s4">
-              <div class="step-head"><span>💳 UPI payment attempted</span><span class="step-num">STEP 4</span></div>
+              <div class="step-head"><span>UPI payment attempted</span><span class="step-num">STEP 4</span></div>
               <div class="step-body"><div class="tx-block" id="s4tx"></div></div>
             </div>
 
             <div class="step" id="s5">
-              <div class="step-head"><span>⚠️ Transaction analysis</span><span class="step-num">STEP 5</span></div>
+              <div class="step-head"><span>Transaction analysis</span><span class="step-num">STEP 5</span></div>
               <div class="step-body">
                 <div id="s5flags"></div>
                 <div class="meter">
@@ -387,7 +385,7 @@
             </div>
 
             <div class="step" id="s6">
-              <div class="step-head"><span>🔗 Fusion engine</span><span class="step-num">STEP 6</span></div>
+              <div class="step-head"><span>Fusion engine</span><span class="step-num">STEP 6</span></div>
               <div class="step-body">
                 <div class="fuse-line"><span>Transaction risk</span><span id="f1">—</span></div>
                 <div class="fuse-line"><span>Voice risk (weighted 60%)</span><span id="f2">—</span></div>
@@ -400,7 +398,7 @@
             </div>
 
             <div class="step" id="s7">
-              <div class="step-head"><span>🚨 Action</span><span class="step-num">STEP 7</span></div>
+              <div class="step-head"><span>Action</span><span class="step-num">STEP 7</span></div>
               <div class="step-body">
                 <div class="alert-final">
                   <div class="big" id="s7title">HIGH FRAUD RISK</div>
@@ -454,10 +452,10 @@
   const DEMO_AUDIO_URL = "/demo/scamcall.wav";
 
   const VERDICT_TEXT = {
-    APPROVE: { label: "🟢 LOW RISK — APPROVE", sub: "Nothing unusual; payment proceeds normally" },
-    VERIFY:  { label: "🔵 SECONDARY VERIFICATION", sub: "Worth a second look before continuing" },
-    WARN:    { label: "🟡 MEDIUM RISK — CHECK", sub: "Worth a second look before continuing" },
-    BLOCK:   { label: "🔴 HIGH RISK — CONFIRM TO PROCEED", sub: "Strong warning; the user still decides" }
+    APPROVE: { label: "LOW RISK — APPROVE", sub: "Nothing unusual; payment proceeds normally" },
+    VERIFY:  { label: "SECONDARY VERIFICATION", sub: "Worth a second look before continuing" },
+    WARN:    { label: "MEDIUM RISK — CHECK", sub: "Worth a second look before continuing" },
+    BLOCK:   { label: "HIGH RISK — CONFIRM TO PROCEED", sub: "Strong warning; the user still decides" }
   };
 
   const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -501,9 +499,9 @@
       const asr = (caps && caps.transcription) || {};
       asrAvailable = !!asr.available;
       document.getElementById("asrBadge").textContent =
-        asrAvailable ? ("🎙️ Whisper " + (asr.model || "") + " ready") : "🎙️ Text mode";
+        asrAvailable ? ("Whisper " + (asr.model || "") + " ready") : "Text mode";
     } catch (e) {
-      document.getElementById("asrBadge").textContent = "🎙️ Text mode";
+      document.getElementById("asrBadge").textContent = "Text mode";
     }
   })();
 
@@ -542,7 +540,7 @@
 
       const flags = (b.signals || []).filter(isVoice).length;
       document.getElementById("ctxB").textContent =
-        "📞 Scam call in progress — " + flags + " coercion pattern" + (flags === 1 ? "" : "s") + " detected";
+        "Scam call in progress — " + flags + " coercion pattern" + (flags === 1 ? "" : "s") + " detected";
 
       document.getElementById("punchSub").textContent =
         `Transaction risk stayed at ${a.payment_score} in both cases. The combined score moved ` +
@@ -595,7 +593,7 @@
           if (!audioRes.ok) throw new Error("demo audio missing");
           const blob = await audioRes.blob();
 
-          st.textContent = "🧠 Transcribing with Whisper…";
+          st.textContent = "Transcribing with Whisper…";
           const form = new FormData();
           form.append("audio", blob, "scamcall.wav");
           const tr = await fetch("/transcribe", { method: "POST", body: form });
@@ -604,17 +602,17 @@
           if (data && data.ok && data.transcript) {
             transcript = data.transcript;
             usedWhisper = true;
-            st.textContent = "✓ Transcribed " + data.audio_seconds + "s of audio in " +
+            st.textContent = "Transcribed " + data.audio_seconds + "s of audio in " +
                              data.transcribe_ms + " ms (Whisper " + data.model + ")";
           } else {
             throw new Error(data.error || "no transcript");
           }
         } catch (e) {
           // Fall back silently to the scripted transcript — the demo must not stall.
-          st.textContent = "✓ Call transcript ready";
+          st.textContent = "Call transcript ready";
         }
       } else {
-        st.textContent = "✓ Call transcript ready";
+        st.textContent = "Call transcript ready";
         await sleep(900);
       }
 
@@ -639,7 +637,7 @@
         const d = document.createElement("div");
         d.className = "flag";
         const name = (sig.label || sig.code).replace(/^Call red flag — /, "");
-        d.innerHTML = "⚠️ " + name + ' <span class="pts">+' + sig.points + "</span>";
+        d.innerHTML = name + ' <span class="pts">+' + sig.points + "</span>";
         s3f.appendChild(d);
         await sleep(430);
       }
@@ -659,12 +657,12 @@
       const s5f = document.getElementById("s5flags");
       s5f.innerHTML = "";
       if (!txnSignals.length) {
-        s5f.innerHTML = '<div class="flag" style="color:var(--success)">✓ Nothing unusual in the payment on its own</div>';
+        s5f.innerHTML = '<div class="flag" style="color:var(--success)">Nothing unusual in the payment on its own</div>';
       }
       for (const sig of txnSignals) {
         const d = document.createElement("div");
         d.className = "flag";
-        d.innerHTML = "⚠️ " + (sig.label || sig.code) + ' <span class="pts">+' + sig.points + "</span>";
+        d.innerHTML = (sig.label || sig.code) + ' <span class="pts">+' + sig.points + "</span>";
         s5f.appendChild(d);
         await sleep(430);
       }
@@ -702,13 +700,13 @@
         (usedWhisper ? " Transcript produced by Whisper from real audio." : "");
 
       btn.disabled = false;
-      btn.textContent = "▶  Run simulation again";
+      btn.textContent = "Run simulation again";
 
     } catch (e) {
       showError("simError", "Simulation stopped: " + e.message +
                 ". Check that the server is running, then try again.");
       btn.disabled = false;
-      btn.textContent = "▶  SIMULATE FRAUD ATTACK";
+      btn.textContent = "Simulate Fraud Attack";
     }
   }
 
@@ -733,8 +731,8 @@
       });
       const el = document.getElementById("s7chosen");
       el.textContent = action === "CANCELLED"
-        ? "✓ Payment cancelled — decision recorded in the audit log"
-        : "✓ Payment confirmed by the user — logged as an override for bank review";
+        ? "Payment cancelled — decision recorded in the audit log"
+        : "Payment confirmed by the user — logged as an override for bank review";
       el.style.display = "block";
       document.getElementById("s7").className = "step done";
     } catch (e) {
