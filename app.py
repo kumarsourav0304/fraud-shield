@@ -16,6 +16,7 @@ import csv
 import os
 import time
 from datetime import datetime
+from typing import Optional
 
 from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.staticfiles import StaticFiles
@@ -32,6 +33,13 @@ from risk_engine import (
     BLOCK_AT,
 )
 from voice_phishing import analyse_transcript
+from risk_policy import evaluate_risk_context, determine_intervention
+
+# Try to import NLP availability check
+try:
+    from nlp_intent import is_available as nlp_is_available
+except ImportError:
+    nlp_is_available = lambda: False
 
 app = FastAPI(title="Explainable Fraud Shield")
 
@@ -86,6 +94,16 @@ PROFILES = load_profiles()
 # ---------------------------------------------------------------------------
 # REQUEST SHAPES
 # ---------------------------------------------------------------------------
+class RecentBurst(BaseModel):
+    """Velocity data for the current transaction window."""
+    transaction_count: int = Field(0, ge=0)
+    cumulative_amount: float = Field(0, ge=0)
+    time_window_minutes: float = Field(10, ge=0)
+    average_amount: float = Field(0, ge=0)
+    max_amount: float = Field(0, ge=0)
+    burst_detected: bool = False
+
+
 class Transaction(BaseModel):
     user_id: str = Field(..., max_length=50)
     amount: float = Field(..., ge=0, le=10_000_000)
@@ -95,6 +113,7 @@ class Transaction(BaseModel):
     timestamp: str = Field(..., max_length=40)
     transcript: str = Field("", max_length=5000)
     accessibility_service_active: bool = False
+    recent_burst: Optional[RecentBurst] = None
 
 
 class Decision(BaseModel):
@@ -138,7 +157,7 @@ def voice_signals_as_attribution(voice):
             allocated += pts
         evidence = sig.get("evidence", "")
         out.append({
-            "code": "voice_" + str(sig.get("code", i)),
+            "code": "voice_" + str(sig.get("code", sig.get("category", i))),
             "label": "Call red flag — " + sig.get("reason", "suspicious call pattern"),
             "points": max(pts, 0),
             "reason": sig.get("reason", "Coercive pattern detected in the call"),
@@ -155,7 +174,10 @@ def voice_signals_as_attribution(voice):
 # ---------------------------------------------------------------------------
 @app.get("/capabilities")
 def capabilities():
-    return {"transcription": transcription.status()}
+    return {
+        "transcription": transcription.status(),
+        "nlp": {"available": nlp_is_available()},
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -199,6 +221,11 @@ def assess(tx: Transaction):
     profile = PROFILES.get(tx.user_id)
     tx_data = tx.model_dump()
 
+    # Prepare recent_burst for the risk engine
+    burst_data = None
+    if tx.recent_burst:
+        burst_data = tx.recent_burst.model_dump()
+
     if profile is None:
         payment = {
             "score": 0, "decision": "APPROVE",
@@ -213,15 +240,36 @@ def assess(tx: Transaction):
             "latency_ms": 0.0,
         }
     else:
-        payment = assess_transaction(tx_data, profile)
+        payment = assess_transaction(tx_data, profile, recent_burst=burst_data)
 
+    # --- Hybrid voice analysis (rules + NLP + normalization) ---
     voice = analyse_transcript(tx.transcript)
-    result = merge_external_signals(payment, voice_signals_as_attribution(voice))
+    voice_attr = voice_signals_as_attribution(voice)
+    result = merge_external_signals(payment, voice_attr)
+
+    # --- Policy layer: separate detection from intervention ---
+    # Collect transaction-only signals (non-voice)
+    all_signals = result.get("signals", [])
+    tx_only_signals = [s for s in all_signals
+                       if not str(s.get("code", "")).startswith("voice_")]
+    voice_only_signals = [s for s in all_signals
+                          if str(s.get("code", "")).startswith("voice_")]
+
+    risk_context = evaluate_risk_context(tx_only_signals, voice, result["score"])
+    policy_decision, policy_reasons = determine_intervention(
+        result["score"], risk_context
+    )
+
+    # Use policy decision instead of raw score-only decision
+    result["decision"] = policy_decision
+    result["display"] = decision_display(policy_decision)
+    result["confidence"] = result.get("confidence", {})
 
     total_latency = round((time.perf_counter() - started) * 1000, 2)
     reasons = result["reasons"] if result["reasons"] else ["No suspicious signals detected"]
 
     return {
+        # --- Backward-compatible fields ---
         "score": result["score"],
         "decision": result["decision"],
         "reasons": reasons,
@@ -236,6 +284,20 @@ def assess(tx: Transaction):
         "thresholds": {"warn_at": WARN_AT, "block_at": BLOCK_AT},
         "privacy": payment["privacy"],
         "latency_ms": total_latency,
+        # --- New fields ---
+        "nlp": {
+            "intent": voice.get("nlp_intent"),
+            "confidence": voice.get("nlp_confidence", 0),
+        },
+        "policy": {
+            "decision": policy_decision,
+            "corroborated": risk_context.get("is_corroborated", False),
+            "multimodal": risk_context.get("is_multimodal", False),
+            "benign_context": risk_context.get("is_benign", False),
+            "reasons": policy_reasons,
+        },
+        "transaction_signals": tx_only_signals,
+        "voice_signals": voice_only_signals,
     }
 
 
@@ -315,8 +377,9 @@ def get_audit():
     total = len(rows)
     blocked = sum(1 for r in rows if r["shield_decision"] == "BLOCK")
     warned = sum(1 for r in rows if r["shield_decision"] == "WARN")
+    verified = sum(1 for r in rows if r["shield_decision"] == "VERIFY")
     overrides = sum(1 for r in rows
-                    if r["shield_decision"] in ("WARN", "BLOCK") and r["user_action"] == "CONFIRMED")
+                    if r["shield_decision"] in ("WARN", "BLOCK", "VERIFY") and r["user_action"] == "CONFIRMED")
     confirmed_fraud = sum(1 for r in rows if r["outcome"] == "CONFIRMED_FRAUD")
     confirmed_legit = sum(1 for r in rows if r["outcome"] == "CONFIRMED_LEGITIMATE")
     pending = sum(1 for r in rows if r["outcome"] == "PENDING")
@@ -326,6 +389,7 @@ def get_audit():
             "total": total,
             "blocked": blocked,
             "warned": warned,
+            "verified": verified,
             "overrides": overrides,
             "confirmed_fraud": confirmed_fraud,
             "confirmed_legitimate": confirmed_legit,
@@ -366,7 +430,7 @@ def get_stats():
         elif not flagged and fraud: fn += 1
         else:                       tn += 1
 
-        if decision == "APPROVE":
+        if decision in ("APPROVE", "VERIFY"):
             history_by_user.setdefault(uid, []).append(tx)
 
     total = tp + fp + tn + fn

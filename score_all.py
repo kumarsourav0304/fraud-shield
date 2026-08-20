@@ -41,7 +41,7 @@ for tx in all_tx:
 
     # Only learn from transactions we APPROVED (a real system wouldn't
     # add a blocked scam payee to "normal"). This keeps profiles clean.
-    if assessment["decision"] == "APPROVE":
+    if assessment["decision"] in ("APPROVE", "VERIFY"):
         history_by_user.setdefault(uid, []).append(tx)
 
 # ---- Print a few flagged examples so you can see it working ----

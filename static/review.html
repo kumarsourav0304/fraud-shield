@@ -47,6 +47,7 @@
     }
     .d-BLOCK { background: var(--danger-bg); color: var(--danger); border-color: var(--danger-border); }
     .d-WARN  { background: var(--warning-bg); color: var(--warning); border-color: var(--warning-border); }
+    .d-VERIFY { background: rgba(96,165,250,0.10); color: #60a5fa; border-color: rgba(96,165,250,0.25); }
     .d-APPROVE { background: var(--success-bg); color: var(--success); border-color: var(--success-border); }
 
     .action-CONFIRMED { color: var(--success); }
@@ -231,6 +232,7 @@
   function decisionLabel(code) {
     if (code === "BLOCK") return "HIGH RISK";
     if (code === "WARN") return "WARN";
+    if (code === "VERIFY") return "VERIFY";
     if (code === "APPROVE") return "APPROVE";
     return esc(code);
   }
@@ -280,7 +282,7 @@
   function outcomeCell(r) {
     const current = safeToken(r.outcome || "PENDING") || "PENDING";
     const tag = `<span class="outcome-tag o-${current}">${esc(current.replace(/_/g, ' '))}</span>`;
-    const flagged = r.shield_decision === "WARN" || r.shield_decision === "BLOCK";
+    const flagged = r.shield_decision === "WARN" || r.shield_decision === "BLOCK" || r.shield_decision === "VERIFY";
     if (!flagged) return tag;
     const idx = Number(r._index);
     const btns = `
@@ -294,9 +296,9 @@
 
   function render() {
     let rows = allRows;
-    if (filter === "flagged")  rows = rows.filter(r => r.shield_decision === "WARN" || r.shield_decision === "BLOCK");
-    if (filter === "override") rows = rows.filter(r => (r.shield_decision === "WARN" || r.shield_decision === "BLOCK") && r.user_action === "CONFIRMED");
-    if (filter === "pending")  rows = rows.filter(r => (r.shield_decision === "WARN" || r.shield_decision === "BLOCK") && (r.outcome || "PENDING") === "PENDING");
+    if (filter === "flagged")  rows = rows.filter(r => r.shield_decision === "WARN" || r.shield_decision === "BLOCK" || r.shield_decision === "VERIFY");
+    if (filter === "override") rows = rows.filter(r => (r.shield_decision === "WARN" || r.shield_decision === "BLOCK" || r.shield_decision === "VERIFY") && r.user_action === "CONFIRMED");
+    if (filter === "pending")  rows = rows.filter(r => (r.shield_decision === "WARN" || r.shield_decision === "BLOCK" || r.shield_decision === "VERIFY") && (r.outcome || "PENDING") === "PENDING");
 
     const tbody = document.getElementById("tbody");
     if (rows.length === 0) {

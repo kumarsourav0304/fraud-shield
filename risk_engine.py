@@ -57,6 +57,17 @@ RULES = {
         "reason": "An app with screen-control permission is active during payment "
                   "- a known method for remotely approving payments",
     },
+    # Velocity signals - only fire when recent_burst data is provided.
+    "recent_transaction_burst": {
+        "label": "Recent transaction burst",
+        "points": 15,
+        "reason": "Multiple transactions in a very short time window",
+    },
+    "amount_burst": {
+        "label": "Amount burst",
+        "points": 15,
+        "reason": "Cumulative amount in recent burst far exceeds typical spending",
+    },
 }
 
 # ---------------------------------------------------------------------------
@@ -72,6 +83,12 @@ DECISION_DISPLAY = {
         "label": "Looks safe",
         "plain": "Nothing unusual about this payment. Safe to continue.",
         "action_hint": "You can proceed normally.",
+    },
+    "VERIFY": {
+        "label": "Needs a second look",
+        "plain": "Something about this payment is slightly unusual. It may be fine, "
+                 "but a quick check is recommended before proceeding.",
+        "action_hint": "Double-check the payee and amount, then proceed if everything looks right.",
     },
     "WARN": {
         "label": "Unusual — please check",
@@ -289,11 +306,15 @@ def rate_confidence(signals, score):
 # ---------------------------------------------------------------------------
 # MAIN ASSESSMENT
 # ---------------------------------------------------------------------------
-def assess_transaction(tx, profile):
+def assess_transaction(tx, profile, recent_burst=None):
     """
     Score a single transaction against the user's profile.
     Returns score, decision, per-signal attribution, confidence,
     privacy manifest and scoring latency.
+
+    recent_burst: optional dict with velocity data:
+        transaction_count, cumulative_amount, time_window_minutes,
+        average_amount, max_amount, burst_detected
     """
     started = time.perf_counter()
 
@@ -340,6 +361,28 @@ def assess_transaction(tx, profile):
             "A third-party app currently holds screen-control permission"
         )
 
+    # Rule 7 (optional): recent transaction burst.
+    # Only fires when recent_burst data is provided.
+    if recent_burst and recent_burst.get("burst_detected"):
+        tx_count = recent_burst.get("transaction_count", 0)
+        cum_amount = recent_burst.get("cumulative_amount", 0)
+        window = recent_burst.get("time_window_minutes", 0)
+        if tx_count >= 3:
+            fired.append("recent_transaction_burst")
+            evidence["recent_transaction_burst"] = (
+                f"{tx_count} transactions totaling "
+                f"Rs {cum_amount:,.0f} within {window:.0f} minutes"
+            )
+
+        # Rule 8: amount burst — cumulative amount far exceeds typical max.
+        if typical > 0 and cum_amount > 3 * typical:
+            fired.append("amount_burst")
+            multiple = round(cum_amount / typical, 1)
+            evidence["amount_burst"] = (
+                f"Burst total Rs {cum_amount:,.0f} is {multiple}x "
+                f"this user's usual maximum of Rs {typical:,.0f}"
+            )
+
     # Build per-signal attribution and total the score
     signals = []
     score = 0
@@ -359,11 +402,14 @@ def assess_transaction(tx, profile):
     raw_score = score
     score = min(score, 100)  # cap at 100
 
-    # Turn the score into an action
+    # Turn the score into an action (VERIFY fits between APPROVE and WARN)
+    VERIFY_AT = 15
     if score >= BLOCK_AT:
         decision = "BLOCK"
     elif score >= WARN_AT:
         decision = "WARN"
+    elif score >= VERIFY_AT:
+        decision = "VERIFY"
     else:
         decision = "APPROVE"
 
@@ -422,10 +468,13 @@ def merge_external_signals(assessment, extra_signals):
         raw += sig["points"]
 
     score = min(raw, 100)
+    VERIFY_AT = 15
     if score >= BLOCK_AT:
         decision = "BLOCK"
     elif score >= WARN_AT:
         decision = "WARN"
+    elif score >= VERIFY_AT:
+        decision = "VERIFY"
     else:
         decision = "APPROVE"
 

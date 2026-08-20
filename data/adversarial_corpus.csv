@@ -1,0 +1,93 @@
+text,label,notes
+"I am calling from your bank regarding suspicious activity on your account",AUTHORITY,standard authority claim
+"Sir this is officer Sharma from CBI we have found illegal transactions",AUTHORITY,indian authority impersonation
+"Bank se bol raha hoon aapka account flag hua hai",AUTHORITY,hinglish authority
+"Main aapka bank manager bol raha hoon urgent matter hai",AUTHORITY,hinglish bank manager
+"RBI se notice aaya hai aapke account pe action hoga",AUTHORITY,RBI impersonation
+"This is the telecom regulatory authority your number will be disconnected",AUTHORITY,TRAI impersonation
+"Please share the OTP that was sent to your mobile right now",CREDENTIAL,direct OTP request
+"OTP batao verification ke liye zaruri hai",CREDENTIAL,hinglish OTP request
+"Tell me the 6 digit code from your SMS for account verification",CREDENTIAL,paraphrased credential request
+"Apna UPI PIN dijiye main transaction verify karunga",CREDENTIAL,hinglish PIN request
+"You are under digital arrest as per supreme court orders",DIGITAL_ARREST,standard digital arrest
+"Digital arrest hai aap par video call pe raho",DIGITAL_ARREST,hinglish digital arrest
+"Supreme court ka order hai you cannot disconnect this call",DIGITAL_ARREST,mixed authority+digital arrest
+"Stay on video verification your arrest warrant is being processed",DIGITAL_ARREST,video call pressure
+"Court order hai aapke khilaf digital arrest ka warrant nikla hai",DIGITAL_ARREST,hinglish court order
+"You are virtually arrested by the enforcement directorate",DIGITAL_ARREST,paraphrased digital arrest
+"Your account will be permanently blocked if you don't respond in 5 minutes",THREAT,account threat with urgency
+"Case file ho chuka hai aapke naam money laundering ka",THREAT,hinglish legal threat
+"Penalty lagegi 50000 rupees agar cooperate nahi kiya toh",THREAT,hinglish penalty threat
+"Your SIM card will be deactivated within 2 hours",THREAT,telecom threat
+"FIR darj ho chuki hai aapke Aadhaar number pe",THREAT,hinglish FIR threat
+"We will freeze all your bank accounts across all banks",THREAT,extreme threat
+"You must transfer the amount immediately before the deadline expires",URGENCY,payment urgency
+"Abhi turant payment karo nahi toh bahut late ho jayega",URGENCY,hinglish urgency
+"This is your absolute last chance to resolve this matter today",URGENCY,escalated urgency
+"Time is running out you have exactly 3 minutes left",URGENCY,time pressure
+"Hurry up jaldi karo samay khatam ho raha hai",URGENCY,hinglish hurry
+"Pay 5000 rupees as security deposit to unfreeze your account",PAYMENT_COERCION,security deposit scam
+"Transfer the money to this account for refund processing",PAYMENT_COERCION,refund bait
+"Paise bhejo verification fee hai refund mil jayega 24 ghante mein",PAYMENT_COERCION,hinglish payment coercion
+"Scan this QR code and pay the processing charges of 2000",PAYMENT_COERCION,QR code scam
+"Just pay a small fee and your loan application will be approved instantly",PAYMENT_COERCION,loan bait
+"Don't tell anyone about this call it is a confidential investigation",SECRECY,standard secrecy
+"Kisi ko mat batao yeh sensitive government matter hai",SECRECY,hinglish secrecy
+"If you inform anyone the investigation will be compromised",SECRECY,threat+secrecy
+"Stay on the line do not disconnect or hang up under any circumstances",SECRECY,call isolation
+"Call mat kaato phone pe raho investigation chal rahi hai",SECRECY,hinglish call isolation
+"Please install AnyDesk on your phone so I can help fix the issue",REMOTE_ACCESS,AnyDesk request
+"Download TeamViewer app I will connect to resolve the banking error",REMOTE_ACCESS,TeamViewer request
+"Screen share karo main aapka phone check karunga remotely",REMOTE_ACCESS,hinglish screen share
+"Install this security application to scan your device for threats",REMOTE_ACCESS,disguised remote access
+"Quick Support app download karo main guide karunga step by step",REMOTE_ACCESS,alternative remote tool
+"Please sir the situation with your account is very serious we need to act urgently to prevent total loss of funds transfer the deposit immediately",PAYMENT_COERCION,long-form social engineering
+"Sir aap abhi payment kar do warna account block ho jayega police case ho jayega jail bhej denge",PAYMENT_COERCION,multi-tactic hinglish
+"Your account has been linked to illegal activities and a warrant for your digital arrest has been issued you must transfer funds to prove your innocence",DIGITAL_ARREST,elaborate digital arrest
+"Main CBI officer hoon investigation chal rahi hai digital arrest hai aapka paise transfer karo innocence prove karne ke liye kisi ko mat batao",DIGITAL_ARREST,multi-tactic hinglish scam
+"Please make the transfer immediately because your account is about to be permanently suspended due to suspicious activities detected",PAYMENT_COERCION,paraphrased avoids common regex
+"Sir aap abhi payment kar do warna account block ho jayega",PAYMENT_COERCION,hinglish paraphrased coercion
+"Hey are we meeting for coffee this afternoon at the usual place?",BENIGN,normal conversation
+"Can you send me the photos from the trip last weekend?",BENIGN,normal request
+"The grocery store has a sale on mangoes should I pick some up?",BENIGN,shopping conversation
+"Happy Diwali! Wishing you and your family prosperity and good health",BENIGN,festival greeting
+"I read in the newspaper that online fraud cases have increased by 40 percent this year",BENIGN,news about fraud
+"My colleague was explaining how digital arrest scams work it was very informative",BENIGN,educational about scams
+"RBI has launched a new awareness campaign about UPI safety",BENIGN,regulatory awareness
+"There was a program on TV about how scammers pretend to be from the income tax department",BENIGN,educational media
+"Banks never ask for your OTP or PIN over the phone remember that",BENIGN,safety advice
+"The police cyber cell website has tips on how to recognize phishing calls",BENIGN,safety information
+"Yesterday someone tried to scam my mother with a fake KYC call but she recognized it",BENIGN,describing past scam attempt
+"I attended a seminar on cyber security where they discussed AnyDesk scams",BENIGN,educational about remote access
+"Digital arrest is a completely fake concept there is no such legal provision",BENIGN,debunking scam
+"Mama ko call aaya tha bank se bolke but it was obviously a scam she ignored it",BENIGN,hinglish describing scam
+"The government has set up helpline 1930 for reporting cyber fraud",BENIGN,safety information
+"We should all be aware that no legitimate authority asks for money over phone",BENIGN,general safety advice
+"News mein aaya ki digital arrest scam se logon ne crores gawaye",BENIGN,hinglish news report
+"My professor discussed online payment security in today's lecture",BENIGN,educational context
+"Have you updated your phone's security settings? There are new guidelines from CERT-IN",BENIGN,tech safety
+"Fraud prevention tip: always verify unknown callers by calling back on official numbers",BENIGN,safety tip
+"I need to verify your identity could you please confirm the last 4 digits of your card for security purposes",CREDENTIAL,sophisticated credential request
+"We detected an unauthorized login from Nigeria please verify by sharing the code we sent",CREDENTIAL,urgency+credential
+"For your protection we need to reset your credentials please provide current password",CREDENTIAL,disguised credential
+"Your insurance claim of 5 lakhs is approved just pay 3000 as processing fee to receive it",PAYMENT_COERCION,insurance bait
+"You won a lucky draw of 10 lakh rupees pay the tax amount of 15000 to claim your prize",PAYMENT_COERCION,lottery scam
+"There is a refund of 8500 in your name please pay 500 processing charges to receive it",PAYMENT_COERCION,refund bait small amount
+"We are monitoring your call for national security purposes do not tell family members about this conversation",SECRECY,national security pretense
+"Yeh top secret matter hai kisi ko bhi nahi batana agar bataya toh case aur serious ho jayega",SECRECY,hinglish escalated secrecy
+"This is an ongoing investigation sharing details with anyone is a punishable offense",SECRECY,legal threat secrecy
+"I need to remotely check your phone for malware please download the app from this link I am sending",REMOTE_ACCESS,malware pretense
+"Your phone has been infected with a virus I need screen access to remove it install QuickSupport now",REMOTE_ACCESS,virus pretense
+"Your account is showing critical errors that can only be fixed through remote diagnostics please share your screen",REMOTE_ACCESS,tech support scam
+"Agar aapne 10 minute mein respond nahi kiya toh aapke account se automatically 2 lakh kat jayega",THREAT,auto-deduction threat
+"Interpol has flagged your passport you will not be able to travel unless this matter is resolved",THREAT,international threat
+"Your credit report will be permanently marked with fraud if you fail to cooperate with us right now",THREAT,credit threat
+"All your family members accounts will also be investigated if you don't settle this immediately",THREAT,family threat
+"Video call karo court ka order dikhata hoon arrest warrant bhi hai aapke naam pe",DIGITAL_ARREST,video proof claim
+"You have exactly 2 hours before the digital arrest becomes physical and officers will arrive at your door",DIGITAL_ARREST,escalation threat
+"Aapka Aadhaar number illegal activities mein use hua hai digital arrest order issue ho chuka hai",DIGITAL_ARREST,aadhaar+digital arrest
+"We have evidence of 47 illegal transactions from your account you are hereby under digital custody",DIGITAL_ARREST,digital custody variant
+"Congratulations you have been selected for a government subsidy of 25000 just pay 1500 registration fee",PAYMENT_COERCION,subsidy bait
+"Sir your electricity bill is overdue pay immediately through this link or connection will be cut",PAYMENT_COERCION,utility threat
+"I am sending you a secure payment link click on it and enter your bank details for the refund",CREDENTIAL,phishing link
+"Apna Aadhaar number aur bank details batao verification complete karni hai abhi immediately",CREDENTIAL,hinglish identity theft

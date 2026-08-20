@@ -127,6 +127,12 @@
       border-left-color: var(--success);
     }
     .v-APPROVE .verdict-title { color: var(--success); }
+    .v-VERIFY {
+      background: rgba(96, 165, 250, 0.10);
+      border-color: rgba(96, 165, 250, 0.25);
+      border-left-color: #60a5fa;
+    }
+    .v-VERIFY .verdict-title { color: #60a5fa; }
     .v-WARN {
       background: var(--warning-bg);
       border-color: var(--warning-border);
@@ -283,6 +289,7 @@
       border: 1px solid;
     }
     .fb-APPROVE { background: var(--success-bg); border-color: var(--success-border); color: var(--success); }
+    .fb-VERIFY  { background: rgba(96, 165, 250, 0.10); border-color: rgba(96, 165, 250, 0.25); color: #60a5fa; }
     .fb-WARN { background: var(--warning-bg); border-color: var(--warning-border); color: var(--warning); }
     .fb-BLOCK { background: var(--danger-bg); border-color: var(--danger-border); color: var(--danger); }
     .final-sub {
@@ -557,6 +564,7 @@
           <option value="safe">U001 — normal grocery payment (₹250)</option>
           <option value="scam">U001 — ₹49,999 to unknown payee, new device, other city</option>
           <option value="mild">U001 — ₹2,000 to a new payee, same device &amp; city</option>
+          <option value="burst">U001 — 5 rapid payments in 10 mins (velocity burst)</option>
           <option value="custom">✏️ Custom — build your own transaction</option>
         </select>
 
@@ -594,7 +602,11 @@
         <label>Phone call before this payment</label>
         <select id="call" onchange="onCallChange()">
           <option value="none">No call — user paid on their own</option>
-          <option value="scamcall">Scam call — "bank official", OTP, urgent, don't tell anyone</option>
+          <option value="scamcall">Scam call (English) — "bank official", OTP, urgent, don't tell anyone</option>
+          <option value="digital_arrest">Digital arrest call — "supreme court order, stay on video call"</option>
+          <option value="hinglish">Hinglish vishing — "bank se bol raha hoon, account block ho jayega"</option>
+          <option value="remote_access">Remote access — "install AnyDesk on your phone, share screen"</option>
+          <option value="benign_edu">Benign discussion — "Digital arrest scams are increasing in India"</option>
           <option value="normalcall">Normal call — a friend about lunch</option>
           <option value="audio">🎙️ Real audio — upload or record a call</option>
         </select>
@@ -706,12 +718,20 @@
   const SCENARIOS = {
     safe: { user_id: "U001", amount: 250,   payee: "merchant_grocery", city: "Ranchi",  device: "DEV-A1",     timestamp: "2026-08-15 14:30:00" },
     scam: { user_id: "U001", amount: 49999, payee: "unknown_9284",     city: "Chennai", device: "DEV-NEW-77", timestamp: "2026-08-15 02:30:00" },
-    mild: { user_id: "U001", amount: 2000,  payee: "new_shop_88",      city: "Ranchi",  device: "DEV-A1",     timestamp: "2026-08-15 14:30:00" }
+    mild: { user_id: "U001", amount: 2000,  payee: "new_shop_88",      city: "Ranchi",  device: "DEV-A1",     timestamp: "2026-08-15 14:30:00" },
+    burst: {
+      user_id: "U001", amount: 3500, payee: "quick_transfer_9", city: "Ranchi", device: "DEV-A1", timestamp: "2026-08-15 14:30:00",
+      recent_burst: { transaction_count: 5, cumulative_amount: 17500, time_window_minutes: 10, average_amount: 3500, max_amount: 5000, burst_detected: true }
+    }
   };
 
   const CALLS = {
     none: "",
     scamcall: "Hello, I am calling from your bank. Your account is frozen due to suspicious activity. This is urgent, you must act now. Do not tell anyone about this call. Please share the OTP to verify and make a small refundable payment to unblock your account.",
+    digital_arrest: "You are under digital arrest by order of the supreme court. Stay on this video call. Transfer ₹25,000 immediately to verify your identity or an arrest warrant will be executed.",
+    hinglish: "Sir main bank se bol raha hoon. Aapka account block ho jayega agar abhi payment nahi kiya. Turant OTP batao aur kisi ko mat batao.",
+    remote_access: "Sir please install AnyDesk on your phone and share your screen with me. I need remote access to fix the banking security error. Do not hang up.",
+    benign_edu: "Digital arrest scams are increasing in India. Yesterday I read about how scammers impersonate police officers and ask people to transfer money.",
     normalcall: "Hey, are we still meeting for lunch tomorrow? I'll book the table for one o'clock. Let me know if that works."
   };
 
@@ -906,15 +926,17 @@
   }
 
   const FALLBACK_DISPLAY = {
-    APPROVE: { label: "Looks safe", plain: "Nothing unusual about this payment.", action_hint: "You can proceed normally." },
-    WARN:    { label: "Unusual — please check", plain: "This payment is a little unusual for you.", action_hint: "Proceed only if you're sure." },
-    BLOCK:   { label: "High risk — confirm to proceed", plain: "This payment strongly matches scam patterns. We are not blocking it — please confirm you really want to send this.", action_hint: "If someone is guiding you on a call, hang up and verify first." }
+    APPROVE: { label: "Looks safe", plain: "Nothing unusual about this payment. Safe to continue.", action_hint: "You can proceed normally." },
+    VERIFY:  { label: "Needs a second look", plain: "Something about this payment is slightly unusual. It may be fine, but a quick check is recommended before proceeding.", action_hint: "Double-check the payee and amount, then proceed if everything looks right." },
+    WARN:    { label: "Unusual — please check", plain: "This payment is a little unusual for you. Take a moment to make sure you meant to send it.", action_hint: "Proceed only if you're sure. Cancel if anything feels off." },
+    BLOCK:   { label: "High risk — confirm to proceed", plain: "This payment strongly matches patterns seen in scams. We are not blocking it — please confirm you really want to send this.", action_hint: "If someone is guiding you on a call, hang up and verify first." }
   };
 
   // The final band never says "blocked": the system escalates friction,
   // it does not stop a payment the user insists on making.
   const FINAL_BAND = {
     APPROVE: { text: "🟢 LOW FRAUD RISK", sub: "Nothing unusual — safe to continue" },
+    VERIFY:  { text: "🔵 SECONDARY VERIFICATION", sub: "Unusual payee or minor anomaly — check before paying" },
     WARN:    { text: "🟡 MODERATE FRAUD RISK", sub: "Check before continuing — you decide" },
     BLOCK:   { text: "🔴 HIGH FRAUD RISK", sub: "Confirm to proceed — payment is not blocked" }
   };
@@ -1000,6 +1022,9 @@
                Math.round(VOICE_WEIGHT * 100) + "% of its own score. " +
                txnRaw + " + " + weighted + " = " + rawTotal;
     note += (rawTotal > 100) ? ", capped at 100." : ".";
+    if (data.policy && data.policy.reasons && data.policy.reasons.length > 0) {
+      note += " Policy: " + data.policy.reasons.join(". ") + ".";
+    }
     document.getElementById("fNote").textContent = note;
 
     const band = FINAL_BAND[data.decision] || FINAL_BAND.WARN;
@@ -1080,6 +1105,12 @@
       l.className = "chip latency";
       l.textContent = "⚡ Scored in " + data.latency_ms + " ms";
       meta.appendChild(l);
+    }
+    if (data.nlp && data.nlp.intent && data.nlp.intent !== "UNAVAILABLE") {
+      const nlpChip = document.createElement("span");
+      nlpChip.className = "chip asr";
+      nlpChip.textContent = "🧠 NLP: " + data.nlp.intent + " (" + Math.round((data.nlp.confidence || 0) * 100) + "%)";
+      meta.appendChild(nlpChip);
     }
     if (asrMeta && callSelect.value === "audio") {
       const a = document.createElement("span");

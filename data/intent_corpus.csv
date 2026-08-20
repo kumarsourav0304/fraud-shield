@@ -1,0 +1,210 @@
+text,label
+"Hey are we still meeting for lunch tomorrow?",BENIGN
+"I'll book the table for one o'clock let me know if that works",BENIGN
+"Can you pick up some groceries on your way home?",BENIGN
+"Happy birthday! Hope you have a great day",BENIGN
+"The weather is really nice today let's go for a walk",BENIGN
+"Did you watch the cricket match last night? What a game!",BENIGN
+"Mom called she wants us to come over for dinner this Sunday",BENIGN
+"I transferred the rent to the landlord this morning",BENIGN
+"Please send me the document we discussed in the meeting",BENIGN
+"What time does the movie start? Should I book tickets?",BENIGN
+"Digital arrest scams are increasing in India",BENIGN
+"Yesterday I read about how scammers impersonate police officers",BENIGN
+"RBI has issued guidelines about fraud prevention",BENIGN
+"My friend was scammed last week someone called pretending to be from the bank",BENIGN
+"News report says cyber fraud cases have doubled this year",BENIGN
+"Be careful with UPI payments always verify the payee",BENIGN
+"Banks never ask for OTP on calls please be aware",BENIGN
+"There is a new scam where people claim digital arrest",BENIGN
+"I attended a fraud awareness workshop at the office today",BENIGN
+"The police warned about new phone scam tactics",BENIGN
+"Have you heard about the KYC update scam that's going around?",BENIGN
+"My colleague's mother lost money to a fake police call",BENIGN
+"Never share your OTP or PIN with anyone not even bank staff",BENIGN
+"The government launched a helpline for cyber fraud reporting",BENIGN
+"I was reading about AnyDesk scams on the news",BENIGN
+"Cyber security experts recommend using two factor authentication",BENIGN
+"The new RBI circular talks about UPI fraud prevention measures",BENIGN
+"My neighbor got a call from someone claiming to be from income tax",BENIGN
+"India today reported that digital arrest scams cost crores annually",BENIGN
+"Awareness about online fraud is important for senior citizens",BENIGN
+"I am calling from your bank regarding your account",AUTHORITY
+"This is the bank official speaking about your savings account",AUTHORITY
+"I am a senior officer from the Reserve Bank of India",AUTHORITY
+"Sir I am calling from the cyber cell police department",AUTHORITY
+"This is income tax department calling about your returns",AUTHORITY
+"I am a CBI officer investigating your account",AUTHORITY
+"ED officer here we have flagged your transactions",AUTHORITY
+"This is customs department your parcel has been seized",AUTHORITY
+"I am calling on behalf of the Reserve Bank",AUTHORITY
+"Sir this is the telecom authority your number is being misused",AUTHORITY
+"Main bank se bol raha hoon aapka account flag hua hai",AUTHORITY
+"Police ki taraf se call hai aapke khilaf complaint hai",AUTHORITY
+"CBI se bol raha hoon investigation chal rahi hai",AUTHORITY
+"Cyber crime se call hai aapka mobile number misuse ho raha hai",AUTHORITY
+"Income tax department se notice aaya hai aapke naam",AUTHORITY
+"RBI se bol raha hoon aapki KYC verify karni hai",AUTHORITY
+"TRAI se baat ho rahi hai aapka sim block hone wala hai",AUTHORITY
+"I am the investigating officer assigned to your case",AUTHORITY
+"This is a call from the fraud investigation unit of your bank",AUTHORITY
+"Sarkari adhikari hoon main aapko inform karna tha",AUTHORITY
+"Sir we are from the central bureau this is regarding money laundering",AUTHORITY
+"I represent the State Bank of India fraud department",AUTHORITY
+"Share the OTP that was just sent to your phone",CREDENTIAL
+"Please tell me your OTP for verification",CREDENTIAL
+"What is the OTP you received? I need it to process your request",CREDENTIAL
+"Please share your UPI PIN so I can verify the transaction",CREDENTIAL
+"Can you read out the verification code sent to your number?",CREDENTIAL
+"I need your CVV number and expiry date for security check",CREDENTIAL
+"Tell me your net banking password to verify your identity",CREDENTIAL
+"OTP batao jo abhi aaya hai aapke phone pe",CREDENTIAL
+"OTP share karo verification ke liye zaruri hai",CREDENTIAL
+"PIN bata do main verify kar deta hoon",CREDENTIAL
+"Password dijiye account unlock karna hai",CREDENTIAL
+"Please share the 6 digit code we just sent",CREDENTIAL
+"Sir OTP aaya hoga abhi read kar dijiye",CREDENTIAL
+"Aapka CVV number batao card ki verification ke liye",CREDENTIAL
+"For security purposes please confirm your debit card PIN",CREDENTIAL
+"The one time password sent to your mobile please read it out",CREDENTIAL
+"OTP bhejo message pe ya call pe bata do",CREDENTIAL
+"To complete the verification I need the code from your SMS",CREDENTIAL
+"Apna UPI PIN enter karo amount refund ho jayega",CREDENTIAL
+"Just tell me the OTP and we will process your refund immediately",CREDENTIAL
+"Your account has been compromised someone accessed it",THREAT
+"There is suspicious activity on your bank account",THREAT
+"Your account is frozen due to illegal transactions",THREAT
+"Your KYC has expired your account will be blocked",THREAT
+"Your SIM will be blocked within 24 hours",THREAT
+"A case has been filed against you for money laundering",THREAT
+"There is a penalty of 50000 rupees on your account",THREAT
+"FIR has been registered against your Aadhaar number",THREAT
+"You will go to jail if you don't cooperate",THREAT
+"Warrant has been issued in your name",THREAT
+"Aapka account freeze ho jayega agar cooperate nahi kiya",THREAT
+"Account block ho jayega 2 ghante mein",THREAT
+"Sim band ho jayega aaj raat tak",THREAT
+"Case darj ho chuka hai aapke khilaf",THREAT
+"Jail bhej denge agar paise nahi bheje",THREAT
+"KYC pending hai account band hone wala hai",THREAT
+"Your account shows transactions linked to terrorism financing",THREAT
+"Money will be deducted automatically if you don't respond",THREAT
+"Your credit score will be permanently damaged",THREAT
+"A complaint has been registered and arrest warrant is being processed",THREAT
+"You must act now or your account will be permanently closed",URGENCY
+"This is urgent please respond immediately",URGENCY
+"You have only 10 minutes to complete this verification",URGENCY
+"Your offer expires today this is the last chance",URGENCY
+"Hurry up before it's too late the deadline is approaching",URGENCY
+"Right now you need to transfer the amount immediately",URGENCY
+"Abhi turant karo nahi toh account band",URGENCY
+"Jaldi karo time khatam ho raha hai",URGENCY
+"Last chance hai aaj hi karna hoga",URGENCY
+"Der mat karo samay khatam ho raha hai",URGENCY
+"Abhi ke abhi payment karo warna late ho jayega",URGENCY
+"Do it right now don't waste even a single minute",URGENCY
+"You have exactly 5 minutes before we escalate this",URGENCY
+"Time is running out act before midnight",URGENCY
+"If you don't do this immediately we will proceed with legal action",URGENCY
+"Foran karo abhi nahi toh bahut mushkil hogi",URGENCY
+"This matter needs to be resolved in the next few minutes",URGENCY
+"Aakhri mauka de raha hoon aapko cooperate karo",URGENCY
+"Make a payment of 5000 rupees for verification",PAYMENT_COERCION
+"Transfer the amount to this account number for processing",PAYMENT_COERCION
+"Pay now to avoid the penalty on your account",PAYMENT_COERCION
+"Just pay a small verification fee and your account will be safe",PAYMENT_COERCION
+"The amount is refundable you will get it back in 24 hours",PAYMENT_COERCION
+"Send the money to this UPI ID for security deposit",PAYMENT_COERCION
+"Scan this QR code and pay 2000 rupees",PAYMENT_COERCION
+"Processing fee of 1000 rupees is required",PAYMENT_COERCION
+"Verification ke liye paise bhejo refund mil jayega",PAYMENT_COERCION
+"Abhi payment karo 5000 rupaye security deposit hai",PAYMENT_COERCION
+"Paise transfer karo is account mein verification hogi",PAYMENT_COERCION
+"QR code scan karo aur amount bhejo",PAYMENT_COERCION
+"Just pay the security deposit and your loan will be processed",PAYMENT_COERCION
+"Transfer 10000 for insurance claim processing",PAYMENT_COERCION
+"Send money to this number for the refund to be initiated",PAYMENT_COERCION
+"Pay the fine amount to avoid further legal proceedings",PAYMENT_COERCION
+"Paisa bhejo turant account mein nahi toh case ho jayega",PAYMENT_COERCION
+"Sir bas ek chhota sa payment karo sab theek ho jayega",PAYMENT_COERCION
+"Don't tell anyone about this call keep it confidential",SECRECY
+"Do not inform your family this is a sensitive government matter",SECRECY
+"Keep this between us don't discuss with anyone",SECRECY
+"Stay on the call do not hang up or cut the call",SECRECY
+"Don't talk to anyone else about this until the matter is resolved",SECRECY
+"Kisi ko mat batao yeh confidential matter hai",SECRECY
+"Call mat kaatna line pe raho investigation chal rahi hai",SECRECY
+"Family ko mat batao warna case aur bada ho jayega",SECRECY
+"Ghar walo ko mat batao police ka kaam hai",SECRECY
+"Phone mat rakhna stay on the line we are monitoring",SECRECY
+"This is a classified investigation do not share details",SECRECY
+"You must not speak to anyone including your bank manager",SECRECY
+"Yeh secret rakhna aapke liye hi accha hai",SECRECY
+"If you tell anyone the investigation will be compromised",SECRECY
+"Kisi se baat mat karo jab tak main na kahoon",SECRECY
+"Please install AnyDesk on your phone I will fix the issue",REMOTE_ACCESS
+"Download TeamViewer app and share the ID with me",REMOTE_ACCESS
+"Share your screen so I can see the problem on your phone",REMOTE_ACCESS
+"Install this app called QuickSupport for remote assistance",REMOTE_ACCESS
+"I need remote access to your phone to fix the banking error",REMOTE_ACCESS
+"AnyDesk install karo main aapka phone check karunga",REMOTE_ACCESS
+"TeamViewer download karo screen share karo",REMOTE_ACCESS
+"App download karo jo main bol raha hoon",REMOTE_ACCESS
+"Remote access de do main problem fix kar dunga",REMOTE_ACCESS
+"Screen share karo main dekh ke batata hoon kya problem hai",REMOTE_ACCESS
+"Install this application it allows me to help you directly",REMOTE_ACCESS
+"Download this security app so we can scan your device",REMOTE_ACCESS
+"Sir UltraViewer install karo main guide karunga",REMOTE_ACCESS
+"I will send you a link please install the app and share code",REMOTE_ACCESS
+"Give me access to your phone for a quick security check",REMOTE_ACCESS
+"Apna phone de do 5 minute mein sab fix ho jayega",REMOTE_ACCESS
+"You are under digital arrest do not move",DIGITAL_ARREST
+"This is a digital arrest by the order of supreme court",DIGITAL_ARREST
+"Digital arrest hai aap par stay on video call",DIGITAL_ARREST
+"You have been digitally arrested as per cyber crime act",DIGITAL_ARREST
+"Supreme court ka order hai aap digital arrest mein hain",DIGITAL_ARREST
+"Video verification is required you must stay on camera",DIGITAL_ARREST
+"Digital arrest kr diya hai aapko cooperate karo",DIGITAL_ARREST
+"Court order issued hai digital arrest ke tahat",DIGITAL_ARREST
+"High court ka notice hai aap arrest mein hain",DIGITAL_ARREST
+"You are under digital arrest transfer money to prove innocence",DIGITAL_ARREST
+"Aap digital arrest mein hain video call mat kaato",DIGITAL_ARREST
+"This is a warrant under digital arrest provisions",DIGITAL_ARREST
+"Stay on video verification do not disconnect or face contempt",DIGITAL_ARREST
+"Digital arrest order is from the supreme court of India",DIGITAL_ARREST
+"Girftar kar liya hai aapko digitally ab paise bhejo",DIGITAL_ARREST
+"You have been placed under digital arrest by central agency",DIGITAL_ARREST
+"Aap par digital arrest hai FIR darj ho chuki hai",DIGITAL_ARREST
+"Sir aap digital arrest mein hain kisi ko mat batao",DIGITAL_ARREST
+"Under digital arrest supreme court order hai cooperate karo",DIGITAL_ARREST
+"Digital arrest hai court ka order dikhata hoon video pe",DIGITAL_ARREST
+"Hello I am calling from your bank your account is frozen due to suspicious activity this is urgent you must act now do not tell anyone please share the OTP",AUTHORITY
+"Sir main bank se bol raha hoon account block ho jayega abhi payment karo OTP batao kisi ko mat batao turant paise bhejo",AUTHORITY
+"You are under digital arrest transfer the money immediately or you will go to jail supreme court ka order hai",DIGITAL_ARREST
+"Police se baat kar raha hoon digital arrest kr diya hai aapko paise bhejo warna jail",DIGITAL_ARREST
+"Install AnyDesk I am from your bank there is a problem with your account I need to check it urgently",REMOTE_ACCESS
+"Abhi turant TeamViewer install karo bank se bol raha hoon screen share karo problem fix karni hai",REMOTE_ACCESS
+"Your KYC is pending account band hone wala hai jaldi se payment karo verification ke liye",URGENCY
+"OTP batao jaldi time khatam ho raha hai account freeze ho jayega",CREDENTIAL
+"Don't tell anyone about this call this is confidential police matter stay on the line kisi ko mat batao",SECRECY
+"Transfer money now or face legal consequences penalty of 50000 will be charged",PAYMENT_COERCION
+"I got a call yesterday from someone claiming to be from CBI asking about digital arrest it was clearly a scam",BENIGN
+"Police ne bataya ki digital arrest jaise koi cheez nahi hoti it's all fake",BENIGN
+"My bank sent a message saying they will never ask for OTP on call",BENIGN
+"News mein aaya tha ki AnyDesk scams badh rahe hain India mein",BENIGN
+"RBI has warned people not to share OTP or PIN with anyone",BENIGN
+"Fraud awareness camp mein bataya ki digital arrest fake hai",BENIGN
+"Someone tried to scam my father by saying his account is frozen but he knew it was fake",BENIGN
+"Teacher ne class mein bataya ki online fraud se kaise bachein",BENIGN
+"I reported a scam call to the cyber crime helpline 1930",BENIGN
+"Newspaper article about how to identify and avoid UPI fraud",BENIGN
+"Sir aap abhi payment kar do warna account block ho jayega police case ho jayega",PAYMENT_COERCION
+"Aapka account compromise ho gaya hai turant OTP share karo verification ke liye",CREDENTIAL
+"Digital arrest hai supreme court order stay on video call paise transfer karo innocent prove karne ke liye",DIGITAL_ARREST
+"Remote access do phone pe app install karo main bank se hoon problem fix karunga jaldi",REMOTE_ACCESS
+"Kisi ko mat batana yeh government investigation hai call pe raho cooperate karo",SECRECY
+"Account se 1 lakh kat jayega agar 10 minute mein response nahi diya",THREAT
+"You must pay the processing fee of 3000 rupees to get your insurance claim otherwise it will be rejected",PAYMENT_COERCION
+"Main CBI officer hoon aapke account mein suspicious transaction mila hai cooperate karo",AUTHORITY
+"Immediately transfer 25000 rupees this is the last chance otherwise your account will be permanently blocked",URGENCY
+"Share your screen install TeamViewer and give me the access code I will resolve the banking issue",REMOTE_ACCESS
